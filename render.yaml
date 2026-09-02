@@ -9,7 +9,7 @@ services:
     plan: free
     runtime: node
     buildCommand: cd backend && npm ci && npm run local-build
-    startCommand: cd backend && npm run start:prod
+    startCommand: cd backend && node dist/src/main
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
