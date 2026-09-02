@@ -10,9 +10,14 @@ async function bootstrap() {
   });
 
   const appUrl = process.env.APP_URL ?? 'http://localhost:5173';
+  const additionalOrigins = (process.env.CORS_ORIGINS ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+  const allowedOrigins = [appUrl, ...additionalOrigins];
 
   app.enableCors({
-    origin: appUrl,
+    origin: (origin) => {
+      if (!origin) return true;
+      return allowedOrigins.includes(origin);
+    },
     credentials: true,
   });
 
