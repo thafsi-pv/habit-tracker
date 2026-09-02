@@ -8,7 +8,7 @@ services:
     name: habit-tracker-api
     plan: free
     runtime: node
-    buildCommand: cd backend && npm ci && npm run local-build
+    buildCommand: cd backend && npm ci && npx prisma generate
     startCommand: cd backend && node dist/src/main
     healthCheckPath: /health
     envVars:
