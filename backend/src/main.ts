@@ -35,9 +35,11 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
 
   const port = process.env.PORT ?? 3000;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
   // eslint-disable-next-line no-console
-  console.log(`API listening on http://localhost:${port}`);
+  console.log(`API listening on port ${port}`);
+  // eslint-disable-next-line no-console
+  console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
 }
 
 bootstrap();

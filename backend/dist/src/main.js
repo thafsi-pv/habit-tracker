@@ -32,8 +32,9 @@ async function bootstrap() {
     }));
     app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());
     const port = process.env.PORT ?? 3000;
-    await app.listen(port);
-    console.log(`API listening on http://localhost:${port}`);
+    await app.listen(port, '0.0.0.0');
+    console.log(`API listening on port ${port}`);
+    console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map
