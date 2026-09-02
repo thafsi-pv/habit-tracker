@@ -10,12 +10,14 @@ exports.CommonModule = void 0;
 const common_1 = require("@nestjs/common");
 const authorization_service_1 = require("./authorization.service");
 const tracker_member_guard_1 = require("./guards/tracker-member.guard");
+const health_controller_1 = require("./health.controller");
 let CommonModule = class CommonModule {
 };
 exports.CommonModule = CommonModule;
 exports.CommonModule = CommonModule = __decorate([
     (0, common_1.Global)(),
     (0, common_1.Module)({
+        controllers: [health_controller_1.HealthController],
         providers: [authorization_service_1.AuthorizationService, tracker_member_guard_1.TrackerMemberGuard],
         exports: [authorization_service_1.AuthorizationService, tracker_member_guard_1.TrackerMemberGuard],
     })
