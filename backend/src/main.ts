@@ -5,6 +5,14 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
+  // Catch silent crashes that would otherwise just kill the process
+  process.on('unhandledRejection', (err) => {
+    console.error('Unhandled Rejection:', err);
+  });
+  process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+  });
+
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log'],
   });
@@ -49,7 +57,8 @@ async function bootstrap() {
 
   const port = Number(process.env.PORT) || 10000;
 
-  await app.listen(port);
+  // Bind explicitly to 0.0.0.0 so Render's external port scanner can detect it
+  await app.listen(port, '0.0.0.0');
 
   console.log(`API listening on ${port}`);
   console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);

@@ -9,6 +9,12 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const app_module_1 = require("./app.module");
 const http_exception_filter_1 = require("./common/filters/http-exception.filter");
 async function bootstrap() {
+    process.on('unhandledRejection', (err) => {
+        console.error('Unhandled Rejection:', err);
+    });
+    process.on('uncaughtException', (err) => {
+        console.error('Uncaught Exception:', err);
+    });
     const app = await core_1.NestFactory.create(app_module_1.AppModule, {
         logger: ['error', 'warn', 'log'],
     });
@@ -38,7 +44,7 @@ async function bootstrap() {
     }));
     app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());
     const port = Number(process.env.PORT) || 10000;
-    await app.listen(port);
+    await app.listen(port, '0.0.0.0');
     console.log(`API listening on ${port}`);
     console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
 }
