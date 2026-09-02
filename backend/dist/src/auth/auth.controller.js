@@ -23,10 +23,11 @@ const current_user_decorator_1 = require("../common/decorators/current-user.deco
 const ACCESS_COOKIE = 'access_token';
 const REFRESH_COOKIE = 'refresh_token';
 function cookieOptions(maxAgeMs) {
+    const isSecure = process.env.COOKIE_SECURE === 'true';
     return {
         httpOnly: true,
-        secure: process.env.COOKIE_SECURE === 'true',
-        sameSite: 'lax',
+        secure: isSecure,
+        sameSite: isSecure ? 'none' : 'lax',
         maxAge: maxAgeMs,
         path: '/',
     };

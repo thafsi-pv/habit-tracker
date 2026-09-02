@@ -22,10 +22,11 @@ const ACCESS_COOKIE = 'access_token';
 const REFRESH_COOKIE = 'refresh_token';
 
 function cookieOptions(maxAgeMs: number) {
+  const isSecure = process.env.COOKIE_SECURE === 'true';
   return {
     httpOnly: true,
-    secure: process.env.COOKIE_SECURE === 'true',
-    sameSite: 'lax' as const,
+    secure: isSecure,
+    sameSite: isSecure ? ('none' as const) : ('lax' as const),
     maxAge: maxAgeMs,
     path: '/',
   };
