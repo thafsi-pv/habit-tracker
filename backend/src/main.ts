@@ -55,12 +55,19 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  const port = Number(process.env.PORT) || 10000;
+  // On Render, the web service must listen on port 10000 by default.
+  // If a local .env file set PORT=3000, we override it to 10000 when RENDER=true.
+  let port = Number(process.env.PORT) || 3000;
+  if (process.env.RENDER) {
+    if (!process.env.PORT || port === 3000) {
+      port = 10000;
+    }
+  }
 
   // Bind explicitly to 0.0.0.0 so Render's external port scanner can detect it
   await app.listen(port, '0.0.0.0');
 
-  console.log(`API listening on ${port}`);
+  console.log(`API listening on ${port} (RENDER=${process.env.RENDER ?? 'false'})`);
   console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
 }
 
