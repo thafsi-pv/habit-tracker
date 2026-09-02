@@ -49,9 +49,9 @@ async function bootstrap() {
 
   const port = Number(process.env.PORT) || 10000;
 
-  await app.listen(port, '0.0.0.0');
+  await app.listen(port);
 
-  console.log(`API listening on 0.0.0.0:${port}`);
+  console.log(`API listening on ${port}`);
   console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
 }
 
