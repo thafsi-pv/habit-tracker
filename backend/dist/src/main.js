@@ -12,14 +12,18 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, {
         logger: ['error', 'warn', 'log'],
     });
-    const appUrl = process.env.APP_URL ?? 'http://localhost:5173';
-    const additionalOrigins = (process.env.CORS_ORIGINS ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+    const normalizeOrigin = (origin) => origin.trim().replace(/\/$/, '');
+    const appUrl = normalizeOrigin(process.env.APP_URL ?? 'http://localhost:5173');
+    const additionalOrigins = (process.env.CORS_ORIGINS ?? '')
+        .split(',')
+        .map(normalizeOrigin)
+        .filter(Boolean);
     const allowedOrigins = [appUrl, ...additionalOrigins];
     app.enableCors({
         origin: (origin) => {
             if (!origin)
                 return true;
-            return allowedOrigins.includes(origin);
+            return allowedOrigins.includes(normalizeOrigin(origin));
         },
         credentials: true,
     });
@@ -28,12 +32,14 @@ async function bootstrap() {
         whitelist: true,
         forbidNonWhitelisted: true,
         transform: true,
-        transformOptions: { enableImplicitConversion: true },
+        transformOptions: {
+            enableImplicitConversion: true,
+        },
     }));
     app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());
-    const port = process.env.PORT ?? 3000;
+    const port = Number(process.env.PORT) || 10000;
     await app.listen(port, '0.0.0.0');
-    console.log(`API listening on port ${port}`);
+    console.log(`API listening on 0.0.0.0:${port}`);
     console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
 }
 bootstrap();
