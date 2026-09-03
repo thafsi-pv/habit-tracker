@@ -14,7 +14,6 @@ exports.NotificationsService = void 0;
 const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../prisma/prisma.service");
-const whatsapp_service_1 = require("../whatsapp/whatsapp.service");
 const dashboard_service_1 = require("../dashboard/dashboard.service");
 const progress_service_1 = require("../progress/progress.service");
 const report_card_service_1 = require("./report-card.service");
@@ -89,9 +88,8 @@ function buildReportMessage(params) {
     return lines.join('\n');
 }
 let NotificationsService = NotificationsService_1 = class NotificationsService {
-    constructor(prisma, whatsappService, dashboardService, progressService, reportCardService) {
+    constructor(prisma, dashboardService, progressService, reportCardService) {
         this.prisma = prisma;
-        this.whatsappService = whatsappService;
         this.dashboardService = dashboardService;
         this.progressService = progressService;
         this.reportCardService = reportCardService;
@@ -180,7 +178,7 @@ let NotificationsService = NotificationsService_1 = class NotificationsService {
                         message: caption,
                     },
                 });
-                const result = await this.whatsappService.sendImageToNumber(senderId, user.whatsappNumber, image, caption);
+                const result = { success: false, error: 'WhatsApp is temporarily paused' };
                 await this.prisma.notificationLog.update({
                     where: { id: log.id },
                     data: {
@@ -203,7 +201,6 @@ exports.NotificationsService = NotificationsService;
 exports.NotificationsService = NotificationsService = NotificationsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        whatsapp_service_1.WhatsAppService,
         dashboard_service_1.DashboardService,
         progress_service_1.ProgressService,
         report_card_service_1.ReportCardService])

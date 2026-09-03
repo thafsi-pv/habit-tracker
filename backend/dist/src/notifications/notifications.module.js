@@ -11,7 +11,6 @@ const common_1 = require("@nestjs/common");
 const notifications_controller_1 = require("./notifications.controller");
 const notifications_service_1 = require("./notifications.service");
 const report_card_service_1 = require("./report-card.service");
-const whatsapp_module_1 = require("../whatsapp/whatsapp.module");
 const dashboard_module_1 = require("../dashboard/dashboard.module");
 const progress_module_1 = require("../progress/progress.module");
 let NotificationsModule = class NotificationsModule {
@@ -19,7 +18,7 @@ let NotificationsModule = class NotificationsModule {
 exports.NotificationsModule = NotificationsModule;
 exports.NotificationsModule = NotificationsModule = __decorate([
     (0, common_1.Module)({
-        imports: [whatsapp_module_1.WhatsAppModule, dashboard_module_1.DashboardModule, progress_module_1.ProgressModule],
+        imports: [dashboard_module_1.DashboardModule, progress_module_1.ProgressModule],
         controllers: [notifications_controller_1.NotificationsController],
         providers: [notifications_service_1.NotificationsService, report_card_service_1.ReportCardService],
         exports: [notifications_service_1.NotificationsService],
