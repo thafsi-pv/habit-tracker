@@ -35,15 +35,6 @@ interface ReportImageParams {
   otherMembers: MemberCardData[];
 }
 
-// Cute illustrations as simple SVG data URIs
-const ILLUSTRATIONS = {
-  star:     'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="80" font-size="80">⭐</text></svg>',
-  rocket:   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="80" font-size="80">🚀</text></svg>',
-  trophy:   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="80" font-size="80">🏆</text></svg>',
-  sparkles: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="80" font-size="80">✨</text></svg>',
-  fire:     'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="80" font-size="80">🔥</text></svg>',
-};
-
 @Injectable()
 export class ReportCardService {
   private readonly logger = new Logger(ReportCardService.name);
@@ -69,6 +60,7 @@ export class ReportCardService {
   }
 
   async render(params: ReportImageParams): Promise<Buffer> {
+    const width = 860;
     const height = this.estimateHeight(params);
     const malayalamFont = this.getMalayalamFont();
 
@@ -80,7 +72,7 @@ export class ReportCardService {
       fonts.push({ name: 'Noto Sans Malayalam', data: malayalamFont, weight: 400, style: 'normal' });
     }
 
-    // Resolve emoji via twemoji for crisp rendering
+    // Resolve emoji via twemoji for crisp rendering on all platforms
     const loadAdditionalAsset = async (code: string, segment: string): Promise<string> => {
       if (code === 'emoji') {
         const codePoint = [...segment].map((c) => c.codePointAt(0)!.toString(16)).join('-');
@@ -92,286 +84,436 @@ export class ReportCardService {
             return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
           }
         } catch {
-          // fall back to text rendering
+          // fall back
         }
       }
       return '';
     };
 
     const svg = await satori(this.buildJsx(params) as never, {
-      width: 750,
+      width,
       height,
       fonts,
       loadAdditionalAsset,
     });
-    const png = new Resvg(svg, { fitTo: { mode: 'width', value: 750 } }).render().asPng();
+    const png = new Resvg(svg, { fitTo: { mode: 'width', value: width } }).render().asPng();
     return png;
   }
 
   private estimateHeight(p: ReportImageParams): number {
-    // Header + footer
-    const base = 380;
-    // Per member: header + habits
+    const baseHeader = 220;
+    const baseSummary = 160;
+    const padding = 80;
+
     const allMembers = [p.currentUser, ...p.otherMembers];
-    const totalHabits = allMembers.reduce((s, m) => s + m.habits.length, 0);
     const memberCount = allMembers.length;
-    // 2-column: ceil(n/2) rows of cards
     const cardRows = Math.ceil(memberCount / 2);
-    // Each card row: ~200 base + 58 per habit (in that card row's tallest card)
-    const maxHabitsPerRow = Math.ceil(totalHabits / cardRows);
-    const memberHeight = cardRows * (200 + maxHabitsPerRow * 62);
-    return Math.max(1100, base + memberHeight + 60);
+
+    let rowsHeight = 0;
+    for (let r = 0; r < cardRows; r++) {
+      const m1 = allMembers[r * 2];
+      const m2 = allMembers[r * 2 + 1];
+
+      const count1 = (m1?.habits || []).reduce((acc, h) => acc + 1 + (h.subtasks?.length || 0), 0);
+      const count2 = (m2?.habits || []).reduce((acc, h) => acc + 1 + (h.subtasks?.length || 0), 0);
+      const maxItems = Math.max(count1, count2, 3);
+
+      // Card header (avatar + bar) ~ 110px, table header ~ 36px, item ~ 44px, footer ~ 44px
+      const cardH = 120 + 36 + maxItems * 44 + 48;
+      rowsHeight += cardH + 16;
+    }
+
+    return Math.max(980, baseHeader + rowsHeight + baseSummary + padding);
   }
 
   private buildJsx(p: ReportImageParams) {
-    // ─── Design Tokens ───────────────────────────────────────────────────────
-    const C = {
-      bg:        '#FAFAFA',       // off-white canvas
-      cardBg:    '#FFFFFF',       // pure white cards
-      heroBg:    '#1A1A2E',       // deep navy hero
-      accent:    '#7C3AED',       // violet
-      accentSoft:'#EDE9FE',       // violet tint
-      teal:      '#0D9488',       // teal for secondary member cards
-      tealSoft:  '#CCFBF1',       // teal tint
-      green:     '#059669',       // green done
-      greenSoft: '#D1FAE5',       // green tint
-      red:       '#E11D48',       // red pending
-      redSoft:   '#FFE4E6',       // red tint
-      orange:    '#EA580C',       // streak orange
-      text:      '#111827',       // near-black
-      muted:     '#6B7280',       // grey
-      border:    '#E5E7EB',       // light border
-      white:     '#FFFFFF',
-      gold:      '#F59E0B',       // gold for master
-    };
-
-    // Determine overall mood
     const allMembers = [p.currentUser, ...p.otherMembers];
     const totalCompleted = allMembers.reduce((s, m) => s + m.completed, 0);
     const totalItems = allMembers.reduce((s, m) => s + m.total, 0);
     const overallPercent = totalItems > 0 ? Math.round((totalCompleted / totalItems) * 100) : 0;
-    const mood = overallPercent === 100 ? 'perfect' : overallPercent >= 75 ? 'great' : 'push';
+    const pendingCount = Math.max(0, totalItems - totalCompleted);
 
+    const mood = overallPercent === 100 ? 'perfect' : overallPercent >= 75 ? 'great' : 'push';
     const moodConfig = {
-      perfect: { emoji: '🏆', msg: 'Everyone nailed it today!',  color: C.gold },
-      great:   { emoji: '🚀', msg: 'Great teamwork, keep it up!', color: C.accent },
-      push:    { emoji: '💪', msg: "Let's push harder tomorrow!", color: C.teal },
+      perfect: { msg: 'Amazing progress today! Everyone nailed it! 🎉' },
+      great:   { msg: 'Amazing progress today! Keep it up! 💪' },
+      push:    { msg: "Good effort today! Let's push higher tomorrow! 🔥" },
     }[mood];
 
-    // ─── Helper ──────────────────────────────────────────────────────────────
+    // Helper for creating virtual DOM nodes for Satori
     const h = (type: string, props: Record<string, unknown> = {}, ...children: unknown[]) => {
       const cleaned = children.filter((c) => c !== null && c !== undefined && c !== false);
       const next: Record<string, unknown> = { ...props };
-      if (cleaned.length === 0) { /* leave children unset */ }
+      if (cleaned.length === 0) { /* empty */ }
       else if (cleaned.length === 1) { next.children = cleaned[0]; }
       else { next.children = cleaned; }
       return { type, props: next };
     };
 
-    // ─── Pill Badge ──────────────────────────────────────────────────────────
-    const pill = (text: string, bg: string, fg: string) =>
-      h('div', {
-        style: {
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: bg, color: fg,
-          borderRadius: 100, padding: '4px 14px',
-          fontSize: 20, fontWeight: 700,
-        },
-      }, text);
+    // Color themes for member cards (Lavender, Mint, Sky, Peach, Rose)
+    const PALETTES = [
+      {
+        primary: '#7C3AED',
+        primaryDark: '#6D28D9',
+        accentBg: '#F5F3FF',
+        cardBorder: '#DDD6FE',
+        headerBg: '#EDE9FE',
+        headerText: '#6D28D9',
+        barFilled: '#8B5CF6',
+        barEmpty: '#EDE9FE',
+        avatarBg: '#DDD6FE',
+        avatarText: '#5B21B6',
+        avatarEmoji: '👧',
+      },
+      {
+        primary: '#059669',
+        primaryDark: '#047857',
+        accentBg: '#F0FDF4',
+        cardBorder: '#BBF7D0',
+        headerBg: '#DCFCE7',
+        headerText: '#047857',
+        barFilled: '#10B981',
+        barEmpty: '#DCFCE7',
+        avatarBg: '#BBF7D0',
+        avatarText: '#065F46',
+        avatarEmoji: '👦',
+      },
+      {
+        primary: '#0284C7',
+        primaryDark: '#0369A1',
+        accentBg: '#F0F9FF',
+        cardBorder: '#BAE6FD',
+        headerBg: '#E0F2FE',
+        headerText: '#0369A1',
+        barFilled: '#0EA5E9',
+        barEmpty: '#E0F2FE',
+        avatarBg: '#BAE6FD',
+        avatarText: '#075985',
+        avatarEmoji: '🧑',
+      },
+      {
+        primary: '#EA580C',
+        primaryDark: '#C2410C',
+        accentBg: '#FFF7ED',
+        cardBorder: '#FED7AA',
+        headerBg: '#FFEDD5',
+        headerText: '#C2410C',
+        barFilled: '#F97316',
+        barEmpty: '#FFEDD5',
+        avatarBg: '#FED7AA',
+        avatarText: '#9A3412',
+        avatarEmoji: '🌸',
+      },
+    ];
 
-    // ─── Donut Progress Ring (SVG circle trick via border-radius) ─────────────
-    // We simulate a ring with two concentric divs
-    const ringProgress = (percent: number, color: string, size: number) => {
-      const deg = Math.round((percent / 100) * 360);
-      // Use a conic-gradient trick
+    // Segmented Progress Bar (10 rounded pill segments)
+    const segmentedBar = (percent: number, filledColor: string, emptyColor: string) => {
+      const totalSegments = 10;
+      const filledCount = Math.round((percent / 100) * totalSegments);
+      const segments: unknown[] = [];
+      for (let i = 0; i < totalSegments; i++) {
+        const isFilled = i < filledCount;
+        segments.push(
+          h('div', {
+            style: {
+              flex: 1,
+              height: 10,
+              borderRadius: 5,
+              background: isFilled ? filledColor : emptyColor,
+              marginRight: i < totalSegments - 1 ? 5 : 0,
+            },
+          })
+        );
+      }
       return h('div', {
         style: {
-          width: size, height: size,
-          borderRadius: '50%',
-          background: `conic-gradient(${color} ${deg}deg, #E5E7EB ${deg}deg)`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          position: 'relative',
+          display: 'flex',
+          flexDirection: 'row',
+          width: '100%',
+          marginTop: 10,
+          marginBottom: 12,
         },
-      },
-        h('div', {
-          style: {
-            width: size - 20, height: size - 20,
-            borderRadius: '50%',
-            background: C.cardBg,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexDirection: 'column',
-          },
-        },
-          h('div', { style: { fontSize: size * 0.28, fontWeight: 900, color: C.text, lineHeight: 1 } }, `${percent}%`),
-          h('div', { style: { fontSize: size * 0.13, color: C.muted, marginTop: 2 } }, 'done'),
-        ),
-      );
+      }, ...segments);
     };
 
-    // ─── Subtask Row ──────────────────────────────────────────────────────────
-    const subtaskRow = (sub: SubtaskRow) => {
-      const done = sub.completed;
-      return h('div', {
-        style: {
-          display: 'flex', alignItems: 'center',
-          background: done ? '#F0FDF4' : '#F9FAFB',
-          border: `1.5px solid ${done ? '#BBF7D0' : C.border}`,
-          borderRadius: 12, padding: '7px 12px',
-          marginTop: 6,
-        },
-      },
-        // Connector / icon
-        h('div', {
-          style: {
-            fontSize: 16, color: done ? C.green : C.muted,
-            marginRight: 8, fontWeight: 700,
-          },
-        }, '└─'),
-        // Subtask name
-        h('div', {
-          style: {
-            flex: 1, fontSize: 18, fontWeight: 500,
-            color: done ? '#15803D' : C.text,
-            fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
-          },
-        }, sub.name),
-        // Status dot / checkmark
-        h('div', {
-          style: {
-            width: 22, height: 22, borderRadius: '50%',
-            background: done ? C.green : '#F3F4F6',
-            border: `1.5px solid ${done ? C.green : C.border}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 12, color: done ? C.white : C.muted, fontWeight: 900,
-          },
-        }, done ? '✓' : '○'),
-      );
-    };
-
-    // ─── Habit Pill ───────────────────────────────────────────────────────────
-    const habitPill = (habit: HabitRow) => {
+    // Habit Row inside User Card
+    const habitRow = (habit: HabitRow) => {
       const done = habit.completed;
       const subtasks = habit.subtasks || [];
       const hasSubtasks = subtasks.length > 0;
 
-      const mainPill = h('div', {
+      const completedSubCount = subtasks.filter((s) => s.completed).length;
+      const progressText = hasSubtasks
+        ? `${completedSubCount}/${subtasks.length}`
+        : done ? '1/1' : '0/1';
+
+      const mainRow = h('div', {
         style: {
-          display: 'flex', alignItems: 'center',
-          background: done ? C.greenSoft : '#F9FAFB',
-          border: `1.5px solid ${done ? C.green : C.border}`,
-          borderRadius: 16, padding: '10px 14px',
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          padding: '8px 6px',
+          borderBottom: hasSubtasks ? 'none' : '1px solid #F1F5F9',
         },
       },
-        // Icon bubble
+        // Habit Icon + Name
         h('div', {
           style: {
-            width: 36, height: 36, borderRadius: '50%',
-            background: done ? C.green : C.border,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 18, marginRight: 12, flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            flex: 1,
+            gap: 10,
           },
-        }, habit.icon ?? '✦'),
-        // Name
+        },
+          h('div', { style: { fontSize: 20 } }, habit.icon ?? '📖'),
+          h('div', {
+            style: {
+              fontSize: 18,
+              fontWeight: 600,
+              color: '#1E293B',
+              fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
+            },
+          }, habit.name),
+        ),
+
+        // Progress fraction
         h('div', {
           style: {
-            flex: 1, fontSize: 22, fontWeight: 600,
-            color: done ? C.green : C.text,
-            fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
+            width: 70,
+            textAlign: 'center',
+            fontSize: 16,
+            fontWeight: 600,
+            color: '#475569',
           },
-        }, habit.name),
-        // Streak badge
-        habit.streak > 0
-          ? h('div', {
-              style: {
-                display: 'flex', alignItems: 'center', gap: 4,
-                background: '#FEF3C7', borderRadius: 10,
-                padding: '3px 10px', marginRight: 8,
-                fontSize: 18, color: C.orange, fontWeight: 700,
-              },
-            }, `🔥 ${habit.streak}`)
-          : null,
-        // Status dot
+        }, progressText),
+
+        // Status circular check / cross icon
         h('div', {
           style: {
-            width: 28, height: 28, borderRadius: '50%',
-            background: done ? C.green : '#F3F4F6',
-            border: `2px solid ${done ? C.green : C.border}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 14, color: done ? C.white : C.muted, fontWeight: 900,
+            width: 60,
+            display: 'flex',
+            justifyContent: 'flex-end',
           },
-        }, done ? '✓' : '○'),
+        },
+          h('div', {
+            style: {
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+              background: done ? '#10B981' : '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#FFFFFF',
+              fontSize: 14,
+              fontWeight: 900,
+            },
+          }, done ? '✓' : '✕'),
+        ),
       );
 
       if (!hasSubtasks) {
-        return h('div', { style: { display: 'flex', flexDirection: 'column', marginBottom: 8 } }, mainPill);
+        return mainRow;
       }
 
-      return h('div', {
-        style: {
-          display: 'flex', flexDirection: 'column',
-          marginBottom: 8,
-        },
-      },
-        mainPill,
-        h('div', {
+      // Render nested subtasks
+      const subRows = subtasks.map((sub, idx) => {
+        const subDone = sub.completed;
+        const isLast = idx === subtasks.length - 1;
+        return h('div', {
           style: {
-            display: 'flex', flexDirection: 'column',
-            marginLeft: 16,
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: '5px 6px 5px 24px',
+            borderBottom: isLast ? '1px solid #F1F5F9' : 'none',
           },
         },
-          ...subtasks.map((sub) => subtaskRow(sub)),
-        ),
-      );
-    };
-
-    // ─── Member Card ──────────────────────────────────────────────────────────
-    const memberCard = (m: MemberCardData) => {
-      const accent = m.isCurrentUser ? C.accent : C.teal;
-      const accentSoft = m.isCurrentUser ? C.accentSoft : C.tealSoft;
-      const ringSize = 90;
-
-      return h('div', {
-        style: {
-          display: 'flex', flexDirection: 'column',
-          background: C.cardBg,
-          borderRadius: 24,
-          border: `2px solid ${m.isCurrentUser ? accent : C.border}`,
-          overflow: 'hidden', flex: 1,
-          // box shadow workaround via border
-        },
-      },
-        // Card header bar
-        h('div', {
-          style: {
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: accentSoft, padding: '18px 20px',
+          h('div', {
+            style: {
+              display: 'flex',
+              alignItems: 'center',
+              flex: 1,
+              gap: 6,
+            },
           },
-        },
-          // Name + role
-          h('div', { style: { display: 'flex', flexDirection: 'column' } },
+            h('div', { style: { fontSize: 13, color: '#94A3B8', fontWeight: 700 } }, '└─'),
             h('div', {
               style: {
-                fontSize: 26, fontWeight: 900, color: C.text,
+                fontSize: 15,
+                fontWeight: 500,
+                color: subDone ? '#059669' : '#64748B',
                 fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
-                display: 'flex', alignItems: 'center', gap: 8,
+              },
+            }, sub.name),
+          ),
+          h('div', {
+            style: {
+              width: 70,
+              textAlign: 'center',
+              fontSize: 14,
+              fontWeight: 500,
+              color: '#64748B',
+            },
+          }, subDone ? '1/1' : '0/1'),
+          h('div', {
+            style: {
+              width: 60,
+              display: 'flex',
+              justifyContent: 'flex-end',
+            },
+          },
+            h('div', {
+              style: {
+                width: 18,
+                height: 18,
+                borderRadius: '50%',
+                background: subDone ? '#10B981' : '#EF4444',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#FFFFFF',
+                fontSize: 11,
+                fontWeight: 900,
+              },
+            }, subDone ? '✓' : '✕'),
+          ),
+        );
+      });
+
+      return h('div', { style: { display: 'flex', flexDirection: 'column' } }, mainRow, ...subRows);
+    };
+
+    // Member Card (User side-by-side card)
+    const memberCard = (m: MemberCardData, index: number) => {
+      const theme = PALETTES[index % PALETTES.length];
+
+      return h('div', {
+        style: {
+          display: 'flex',
+          flexDirection: 'column',
+          background: '#FFFFFF',
+          borderRadius: 22,
+          border: `2px solid ${theme.cardBorder}`,
+          padding: '18px 20px',
+          flex: 1,
+        },
+      },
+        // Card Top: Avatar, Name + sparkle, Progress %
+        h('div', {
+          style: {
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          },
+        },
+          // Avatar + Name
+          h('div', {
+            style: {
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+            },
+          },
+            // Avatar Circle
+            h('div', {
+              style: {
+                width: 52,
+                height: 52,
+                borderRadius: '50%',
+                background: theme.avatarBg,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 28,
+                border: `2px solid ${theme.cardBorder}`,
+              },
+            }, theme.avatarEmoji),
+
+            // User Name
+            h('div', {
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 24,
+                fontWeight: 900,
+                color: theme.primaryDark,
+                fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
               },
             },
               m.name,
-              m.isMaster ? h('div', { style: { fontSize: 20 } }, '👑') : null,
-              m.isCurrentUser ? pill('You', accent, C.white) : null,
+              h('div', { style: { fontSize: 18, color: '#F59E0B' } }, '✨'),
+              m.isMaster ? h('div', { style: { fontSize: 18 } }, '👑') : null,
             ),
-            h('div', { style: { fontSize: 18, color: C.muted, marginTop: 4 } },
-              `${m.completed}/${m.total} activities`),
           ),
-          // Progress ring
-          ringProgress(m.percent, accent, ringSize),
+
+          // Progress %
+          h('div', {
+            style: {
+              fontSize: 26,
+              fontWeight: 900,
+              color: theme.primary,
+            },
+          }, `${m.percent}%`),
         ),
-        // Habits list
-        h('div', { style: { display: 'flex', flexDirection: 'column', padding: '16px 20px' } },
-          ...m.habits.map((habit) => habitPill(habit)),
+
+        // Horizontal Segmented Progress Bar
+        segmentedBar(m.percent, theme.barFilled, theme.barEmpty),
+
+        // Habit Table Header
+        h('div', {
+          style: {
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: theme.headerBg,
+            borderRadius: 12,
+            padding: '8px 12px',
+            marginBottom: 6,
+          },
+        },
+          h('div', { style: { flex: 1, fontSize: 15, fontWeight: 700, color: theme.headerText } }, 'Habit'),
+          h('div', { style: { width: 70, textAlign: 'center', fontSize: 15, fontWeight: 700, color: theme.headerText } }, 'Progress'),
+          h('div', { style: { width: 60, textAlign: 'right', fontSize: 15, fontWeight: 700, color: theme.headerText } }, 'Status'),
+        ),
+
+        // Habit Rows
+        h('div', {
+          style: {
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1,
+          },
+        },
+          ...m.habits.map((habit) => habitRow(habit)),
           m.habits.length === 0
-            ? h('div', { style: { fontSize: 20, color: C.muted, textAlign: 'center', padding: 16 } }, 'No habits yet')
+            ? h('div', { style: { fontSize: 16, color: '#94A3B8', textAlign: 'center', padding: '16px 0' } }, 'No habits yet')
             : null,
+        ),
+
+        // Card Footer: "X/Y completed"
+        h('div', {
+          style: {
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: 12,
+            paddingTop: 8,
+          },
+        },
+          h('div', {
+            style: {
+              fontSize: 15,
+              fontWeight: 700,
+              color: theme.primary,
+            },
+          }, `${m.completed}/${m.total} completed`),
+          h('div', { style: { fontSize: 24 } }, m.percent >= 80 ? '🎉' : m.percent >= 50 ? '🌱' : '✨'),
         ),
       );
     };
@@ -381,133 +523,322 @@ export class ReportCardService {
     for (let i = 0; i < allMembers.length; i += 2) {
       const left = allMembers[i];
       const right = allMembers[i + 1];
-      const rowChildren: unknown[] = [memberCard(left)];
+      const rowChildren: unknown[] = [memberCard(left, i)];
       if (right) {
-        rowChildren.push(h('div', { style: { width: 16 } }));
-        rowChildren.push(memberCard(right));
+        rowChildren.push(h('div', { style: { width: 20 } }));
+        rowChildren.push(memberCard(right, i + 1));
       } else {
-        // Spacer so single card stays at 50% width
+        rowChildren.push(h('div', { style: { width: 20 } }));
         rowChildren.push(h('div', { style: { flex: 1 } }));
       }
       memberRows.push(
         h('div', {
-          style: { display: 'flex', flexDirection: 'row', width: '100%', marginBottom: 16 },
+          style: { display: 'flex', flexDirection: 'row', width: '100%', marginBottom: 18 },
         }, ...rowChildren),
       );
     }
 
-    // ─── Root ─────────────────────────────────────────────────────────────────
+    // ─── Root Container ───────────────────────────────────────────────────────
     return h('div', {
       style: {
-        display: 'flex', flexDirection: 'column',
-        width: '100%', height: '100%',
-        background: C.bg,
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
+        background: '#EFF6FF',
+        padding: '28px',
         fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
       },
     },
 
-      // ── Hero Banner ────────────────────────────────────────────────────────
+      // Large White Rounded Card Wrapper
       h('div', {
         style: {
-          display: 'flex', flexDirection: 'row', alignItems: 'center',
-          background: C.heroBg,
-          padding: '36px 48px 32px',
+          display: 'flex',
+          flexDirection: 'column',
+          background: '#FFFFFF',
+          borderRadius: 32,
+          border: '2px solid #E2E8F0',
+          padding: '32px 34px',
+          flex: 1,
         },
       },
-        // Left: text
-        h('div', { style: { display: 'flex', flexDirection: 'column', flex: 1 } },
-          // Top label
+
+        // ── Header Section ───────────────────────────────────────────────────
+        h('div', {
+          style: {
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: 24,
+          },
+        },
+          // Left: Titles & Greeting
           h('div', {
             style: {
-              display: 'flex', alignItems: 'center', gap: 10,
-              background: 'rgba(255,255,255,0.08)', borderRadius: 12,
-              padding: '6px 16px', marginBottom: 16, alignSelf: 'flex-start',
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
             },
           },
-            h('div', { style: { fontSize: 22, color: '#A78BFA' } }, '📅'),
-            h('div', { style: { fontSize: 20, color: '#C4B5FD', fontWeight: 600 } }, p.dateLabel),
+            // Main Bold Title
+            h('div', {
+              style: {
+                fontSize: 44,
+                fontWeight: 900,
+                color: '#0F172A',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                lineHeight: 1.1,
+              },
+            },
+              h('div', { style: { color: '#F59E0B' } }, '⭐'),
+              'Daily Habit Report',
+            ),
+
+            // Subtitle / Tracker Name
+            h('div', {
+              style: {
+                fontSize: 18,
+                fontWeight: 600,
+                color: '#475569',
+                marginTop: 6,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              },
+            },
+              '☀️ Morning Routine',
+              h('div', { style: { color: '#CBD5E1', margin: '0 4px' } }, '•'),
+              `📌 ${p.trackerName}`,
+            ),
+
+            // Date
+            h('div', {
+              style: {
+                fontSize: 16,
+                fontWeight: 500,
+                color: '#64748B',
+                marginTop: 4,
+              },
+            }, `📅 ${p.dateLabel}`),
+
+            // Friendly Greeting
+            h('div', {
+              style: {
+                fontSize: 20,
+                fontWeight: 700,
+                color: '#7C3AED',
+                marginTop: 10,
+                fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
+              },
+            }, `Hey ${p.userName}! 👋 Keep going, you're doing great!`),
           ),
-          // Title
-          h('div', {
-            style: { fontSize: 52, fontWeight: 900, color: C.white, lineHeight: 1.1, marginBottom: 10 },
-          }, 'Daily Report'),
-          h('div', {
-            style: { fontSize: 28, fontWeight: 400, color: '#A78BFA', marginBottom: 6 },
-          }, `📌 ${p.trackerName}`),
+
+          // Right: Cute Illustrations (Smiling sun, cloud, plant)
           h('div', {
             style: {
-              fontSize: 26, color: '#E0E7FF', marginTop: 8,
-              fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 16,
+              marginLeft: 20,
             },
-          }, `Hey ${p.userName}! 👋`),
+          },
+            h('div', { style: { fontSize: 58 } }, '☀️'),
+            h('div', { style: { fontSize: 42 } }, '☁️'),
+            h('div', { style: { fontSize: 48 } }, '🪴'),
+          ),
         ),
-        // Right: big decorative emoji
+
+        // ── Main Content: Side-by-Side User Cards ─────────────────────────────
         h('div', {
           style: {
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 120, marginLeft: 32,
-            background: 'rgba(255,255,255,0.05)',
-            borderRadius: 32, width: 160, height: 160,
+            display: 'flex',
+            flexDirection: 'column',
+            width: '100%',
           },
-        }, p.currentUser.percent === 100 ? '🏆' : p.currentUser.percent >= 75 ? '🚀' : '✨'),
-      ),
+        }, ...memberRows),
 
-      // ── Content area ───────────────────────────────────────────────────────
-      h('div', { style: { display: 'flex', flexDirection: 'column', padding: '28px 40px 0' } },
-
-        // Section label
+        // ── Bottom Group Summary Card ─────────────────────────────────────────
         h('div', {
           style: {
-            fontSize: 22, fontWeight: 700, color: C.muted,
-            letterSpacing: 2, marginBottom: 16,
-            textTransform: 'uppercase',
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            background: '#FEF9C3',
+            border: '2px solid #FDE047',
+            borderRadius: 24,
+            padding: '18px 24px',
+            marginTop: 'auto',
           },
-        }, '── Members ──'),
-
-        // 2-column member grid
-        ...memberRows,
-      ),
-
-      // ── Footer Summary ─────────────────────────────────────────────────────
-      h('div', {
-        style: {
-          display: 'flex', alignItems: 'center',
-          background: C.heroBg, margin: '12px 40px 40px',
-          borderRadius: 24, padding: '24px 32px',
         },
-      },
-        // Big mood emoji
-        h('div', {
-          style: {
-            fontSize: 72, marginRight: 28,
-            background: 'rgba(255,255,255,0.06)', borderRadius: 20,
-            width: 96, height: 96,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          },
-        }, moodConfig.emoji),
-        // Stats
-        h('div', { style: { display: 'flex', flexDirection: 'column', flex: 1 } },
-          h('div', {
-            style: { fontSize: 30, fontWeight: 900, color: C.white, marginBottom: 6 },
-          }, moodConfig.msg),
-          h('div', {
-            style: { fontSize: 22, color: '#A78BFA' },
-          }, `Group total: ${totalCompleted}/${totalItems} · ${overallPercent}% complete`),
-        ),
-        // Overall ring
-        h('div', { style: { marginLeft: 24 } },
-          // a simpler big percent badge
+          // Trophy on Left
           h('div', {
             style: {
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              fontSize: 52,
+              marginRight: 16,
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
-              background: moodConfig.color, borderRadius: 20,
-              padding: '16px 24px',
+            },
+          }, '🏆'),
+
+          // Summary Text
+          h('div', {
+            style: {
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
             },
           },
-            h('div', { style: { fontSize: 48, fontWeight: 900, color: C.white, lineHeight: 1 } }, `${overallPercent}%`),
-            h('div', { style: { fontSize: 18, color: 'rgba(255,255,255,0.8)', marginTop: 4 } }, 'overall'),
+            h('div', {
+              style: {
+                fontSize: 24,
+                fontWeight: 900,
+                color: '#1E293B',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              },
+            },
+              'Group Summary',
+              h('div', { style: { color: '#F59E0B' } }, '⭐'),
+            ),
+            h('div', {
+              style: {
+                fontSize: 18,
+                fontWeight: 700,
+                color: '#475569',
+                marginTop: 3,
+              },
+            }, `Total: ${totalCompleted}/${totalItems} (${overallPercent}%)`),
+            h('div', {
+              style: {
+                fontSize: 15,
+                fontWeight: 600,
+                color: '#D97706',
+                marginTop: 3,
+              },
+            }, moodConfig.msg),
           ),
+
+          // Donut Progress Ring
+          h('div', {
+            style: {
+              width: 76,
+              height: 76,
+              borderRadius: '50%',
+              background: `conic-gradient(#8B5CF6 ${Math.round(overallPercent * 3.6)}deg, #E2E8F0 ${Math.round(overallPercent * 3.6)}deg)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 24,
+            },
+          },
+            h('div', {
+              style: {
+                width: 54,
+                height: 54,
+                borderRadius: '50%',
+                background: '#FEF9C3',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 18,
+                fontWeight: 900,
+                color: '#1E293B',
+              },
+            }, `${overallPercent}%`),
+          ),
+
+          // Stats Stack (Completed, Pending, Participants)
+          h('div', {
+            style: {
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 5,
+              marginRight: 24,
+            },
+          },
+            h('div', {
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 15,
+                fontWeight: 600,
+                color: '#334155',
+              },
+            },
+              h('div', {
+                style: {
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  background: '#10B981',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FFFFFF',
+                  fontSize: 11,
+                  fontWeight: 900,
+                },
+              }, '✓'),
+              `Completed ${totalCompleted}`,
+            ),
+            h('div', {
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 15,
+                fontWeight: 600,
+                color: '#334155',
+              },
+            },
+              h('div', {
+                style: {
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  background: '#EF4444',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FFFFFF',
+                  fontSize: 11,
+                  fontWeight: 900,
+                },
+              }, '✕'),
+              `Pending ${pendingCount}`,
+            ),
+            h('div', {
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 15,
+                fontWeight: 600,
+                color: '#334155',
+              },
+            },
+              h('div', { style: { fontSize: 15 } }, '👥'),
+              `Participants ${allMembers.length}`,
+            ),
+          ),
+
+          // Cute Rocket on Right
+          h('div', {
+            style: {
+              fontSize: 52,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+          }, '🚀'),
         ),
       ),
     );
