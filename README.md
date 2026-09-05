@@ -1,37 +1,58 @@
-# Habit Tracker — Frontend (React + Vite)
+# Shared Habit Tracker (MVP)
 
-## Setup
+A mobile-first shared habit tracker with WhatsApp (Baileys) daily reports.
 
-```bash
-npm install
-cp .env.example .env   # points VITE_API_URL at the backend
-npm run dev
+```
+habit-tracker/
+├── backend/    NestJS + Prisma + PostgreSQL API
+└── frontend/   React + Vite + Tailwind + shadcn-style UI
 ```
 
-Opens on `http://localhost:5173`.
+## Quick start
 
-## Verification (run locally — this sandbox has no network access)
+1. **Database**: have a Postgres instance reachable (local, Docker, or hosted).
+2. **Backend**: see `backend/README.md` — install, configure `.env`, run
+   migrations, seed, start on port 3000.
+3. **Frontend**: see `frontend/README.md` — install, configure `.env`, start
+   on port 5173.
+4. Log in with the seeded accounts (`thafsi@example.com` / `naju@example.com`,
+   password `password123`) or sign up fresh.
 
-```bash
-npm run lint
-npx tsc -b --noEmit
-npm run build
-```
+## What's implemented
 
-## Notes
+- Email/password + Google OAuth auth, HTTP-only cookies, refresh rotation
+- Trackers, MASTER/MEMBER roles, tracker membership, personal-tracker
+  onboarding flow
+- Habits + subtasks (master-managed), per-user daily completion
+  (member-managed, own data only)
+- Dashboard, daily/weekly/monthly progress, streak calculation
+  (timezone-aware)
+- Email-token invitation flow with expiry and email-match enforcement
+- WhatsApp via a provider-abstraction (`WhatsAppProvider` interface) backed
+  by Baileys today, swappable for the Meta Cloud API later without touching
+  business logic; sessions persist in Postgres (encrypted) so they survive
+  restarts; QR/status pushed over WebSocket
+- Daily WhatsApp report via `@nestjs/schedule`, with a `NotificationLog` for
+  retry/audit
+- Authorization is enforced entirely server-side via a single
+  `AuthorizationService` — the client's role/tracker/user hints are never
+  trusted
 
-- UI primitives in `src/components/ui/` are hand-written, Tailwind +
-  Radix components matching shadcn/ui's API and styling conventions (same
-  props/variants you'd get from `npx shadcn add button`, etc.) — this
-  sandbox couldn't reach the shadcn CLI/registry (no network), so they're
-  authored directly rather than fetched. They're drop-in compatible if you
-  later run `npx shadcn add <component>` to replace any of them.
-- Sheet/Drawer/Popover/Tooltip/Dropdown from the original component list
-  were consolidated into the `Dialog` primitive for this MVP to keep scope
-  tight — swap in dedicated Radix Sheet/Popover components later if you
-  want distinct slide-up vs. centered-modal motion.
-- `useWhatsAppStatus` opens a Socket.IO connection to `${VITE_API_URL}/whatsapp`
-  authenticated via the same access-token cookie used for REST calls, and
-  merges pushed `status` events into the React Query cache — no polling.
-- Optimistic habit/subtask completion toggling lives in `use-dashboard.ts`,
-  with rollback on a failed mutation.
+## What's stubbed / needs your input before production
+
+- **Email delivery** for invitations logs to console
+  (`backend/src/invitations/email.service.ts`) — wire up a real provider.
+- **Google OAuth credentials** and **WhatsApp session encryption key** must
+  be set in `backend/.env` (see `.env.example`).
+- **Verification**: this was built in a sandboxed environment with no
+  network access, so `npm install`, `prisma migrate`, builds, lint, and
+  tests have **not** been run against real dependency versions. Run the
+  verification commands in each package's README locally and paste back
+  any errors — dependency version mismatches (Baileys/Nest/Prisma APIs
+  shift between minor versions) are the most likely source of issues.
+- **UI primitives** are hand-authored to match shadcn/ui's conventions
+  rather than pulled from the shadcn CLI/registry (no network access) — see
+  `frontend/README.md`.
+- No automated tests exist yet for invitations, WhatsApp, or the full
+  auth flow — only `AuthorizationService` and the habit-completion
+  roll-up logic have unit tests as a starting example.
