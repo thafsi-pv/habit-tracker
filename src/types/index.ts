@@ -16,6 +16,7 @@ export interface Tracker {
   name: string;
   ownerId: string;
   myRole: TrackerRole;
+  notifyOnActivityUpdate?: boolean;
   _count?: { members: number; habits: number };
 }
 

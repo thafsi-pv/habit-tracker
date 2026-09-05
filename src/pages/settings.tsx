@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { ChevronRight, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useActiveTracker } from '@/hooks/use-active-tracker';
 import { useUpdateSettings } from '@/hooks/use-settings';
+import { useUpdateTracker } from '@/hooks/use-trackers';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ export default function Settings() {
   const { user, refetch } = useAuth();
   const { activeTracker, trackers, setActiveTrackerId } = useActiveTracker();
   const updateSettings = useUpdateSettings();
+  const updateTracker = useUpdateTracker();
   const [notificationTime, setNotificationTime] = React.useState(user?.notificationTime ?? '20:00');
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(user?.notificationsEnabled ?? false);
   const [whatsappNumber, setWhatsappNumber] = React.useState(user?.whatsappNumber ?? '');
@@ -137,18 +139,43 @@ export default function Settings() {
       {isMaster && activeTracker && (
         <Card>
           <CardHeader><CardTitle>Tracker Management</CardTitle></CardHeader>
-          <CardContent className="space-y-2 p-4 pt-0">
-            <ManageHabitsDialog trackerId={activeTracker.id} />
-            <ManageMembersDialog trackerId={activeTracker.id} />
-            <InviteMemberDialog trackerId={activeTracker.id} />
-            <Button
-              variant="secondary"
-              className="w-full"
-              disabled={triggerReport.isPending}
-              onClick={() => triggerReport.mutate(activeTracker.id)}
-            >
-              {triggerReport.isPending ? 'Sending Report...' : 'Trigger Report Now'}
-            </Button>
+          <CardContent className="space-y-4 p-4 pt-0">
+            <label className="flex items-center justify-between">
+              <span className="text-sm font-medium">Broadcast Activity Completion</span>
+              <input
+                type="checkbox"
+                className="h-6 w-6"
+                checked={activeTracker.notifyOnActivityUpdate ?? false}
+                onChange={async (e) => {
+                  try {
+                    await updateTracker.mutateAsync({
+                      trackerId: activeTracker.id,
+                      notifyOnActivityUpdate: e.target.checked
+                    });
+                    toast.success('Tracker settings saved');
+                  } catch {
+                    toast.error('Could not save tracker settings');
+                  }
+                }}
+                disabled={updateTracker.isPending}
+              />
+            </label>
+            <p className="text-xs text-muted-foreground mt-0">
+              When someone marks an activity as done, a quick WhatsApp notification will be sent to the group.
+            </p>
+            <div className="space-y-2 pt-2">
+              <ManageHabitsDialog trackerId={activeTracker.id} />
+              <ManageMembersDialog trackerId={activeTracker.id} />
+              <InviteMemberDialog trackerId={activeTracker.id} />
+              <Button
+                variant="secondary"
+                className="w-full"
+                disabled={triggerReport.isPending}
+                onClick={() => triggerReport.mutate(activeTracker.id)}
+              >
+                {triggerReport.isPending ? 'Sending Report...' : 'Trigger Report Now'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
