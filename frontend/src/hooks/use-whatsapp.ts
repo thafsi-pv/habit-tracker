@@ -13,10 +13,14 @@ export function useWhatsAppStatus() {
   const query = useQuery({
     queryKey: ['whatsapp', 'status'],
     queryFn: async () => (await api.get<WhatsAppStatus>('/whatsapp/status')).data,
+    refetchInterval: (query) => (query.state.data?.status === 'CONNECTING' ? 2000 : false),
   });
 
   React.useEffect(() => {
-    const socket = io(`${WS_URL}/whatsapp`, { withCredentials: true, transports: ['websocket'] });
+    const socket = io(`${WS_URL}/whatsapp`, {
+      withCredentials: true,
+      transports: ['polling', 'websocket'],
+    });
     socketRef.current = socket;
 
     socket.on('status', (status: WhatsAppStatus) => {
@@ -30,11 +34,16 @@ export function useWhatsAppStatus() {
 
   const connect = useMutation({
     mutationFn: async () => (await api.post('/whatsapp/connect')).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['whatsapp', 'status'] });
+    },
   });
 
   const disconnect = useMutation({
     mutationFn: async () => (await api.post('/whatsapp/disconnect')).data,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['whatsapp', 'status'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['whatsapp', 'status'] });
+    },
   });
 
   return { ...query, connect, disconnect };

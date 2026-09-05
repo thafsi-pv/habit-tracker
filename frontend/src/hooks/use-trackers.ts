@@ -83,3 +83,26 @@ export function useCreateSubtask(trackerId: string) {
     },
   });
 }
+
+export function useUpdateSubtask(trackerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ subtaskId, ...input }: { subtaskId: string; name?: string; isActive?: boolean }) =>
+      (await api.patch(`/subtasks/${subtaskId}`, input)).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tracker', trackerId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
+
+export function useDeleteSubtask(trackerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (subtaskId: string) => (await api.delete(`/subtasks/${subtaskId}`)).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tracker', trackerId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
