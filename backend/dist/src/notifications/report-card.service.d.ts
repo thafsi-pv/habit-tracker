@@ -23,8 +23,11 @@ interface ReportImageParams {
 export declare class ReportCardService {
     private readonly logger;
     private readonly fontPath;
+    private readonly malayalamFontPath;
     private cachedFont;
+    private cachedMalayalamFont;
     private getFont;
+    private getMalayalamFont;
     render(params: ReportImageParams): Promise<Buffer>;
     private estimateHeight;
     private buildJsx;

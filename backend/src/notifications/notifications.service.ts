@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { NotificationChannel, NotificationType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-// import { WhatsAppService } from '../whatsapp/whatsapp.service';
+import { WhatsAppService } from '../whatsapp/whatsapp.service';
 import { DashboardService } from '../dashboard/dashboard.service';
 import { ProgressService } from '../progress/progress.service';
 import { ReportCardService } from './report-card.service';
@@ -112,7 +112,7 @@ export class NotificationsService {
 
   constructor(
     private prisma: PrismaService,
-    // private whatsappService: WhatsAppService,
+    private whatsappService: WhatsAppService,
     private dashboardService: DashboardService,
     private progressService: ProgressService,
     private reportCardService: ReportCardService,
@@ -214,15 +214,12 @@ export class NotificationsService {
           },
         });
 
-        /*
         const result = await this.whatsappService.sendImageToNumber(
           senderId,
           user.whatsappNumber,
           image,
           caption,
         );
-        */
-        const result = { success: false, error: 'WhatsApp is temporarily paused' };
 
         await this.prisma.notificationLog.update({
           where: { id: log.id },
@@ -238,6 +235,37 @@ export class NotificationsService {
         }
       } catch (err) {
         this.logger.error(`Error sending report image for member ${user.id} in tracker ${trackerId}`, err as Error);
+      }
+    }
+  }
+
+  async broadcastActivityCompletion(trackerId: string, activityName: string, completedByUserId: string, completedByUserName: string): Promise<void> {
+    const tracker = await this.prisma.tracker.findUnique({
+      where: { id: trackerId },
+      include: {
+        members: { include: { user: true } },
+      },
+    });
+    if (!tracker) return;
+
+    const adminUser = await this.prisma.user.findUnique({ where: { email: 'thafsi@example.com' } });
+    if (!adminUser) return;
+    const senderId = adminUser.id;
+
+    for (const member of tracker.members) {
+      const user = member.user;
+      if (!user.whatsappNumber || user.id === completedByUserId) continue;
+
+      const message = `✅ *${completedByUserName}* just completed *${activityName}* in *${tracker.name}*!`;
+
+      try {
+        await this.whatsappService.sendToNumber(
+          senderId,
+          user.whatsappNumber,
+          message
+        );
+      } catch (err) {
+        this.logger.error(`Error broadcasting activity for member ${user.id}`, err as Error);
       }
     }
   }

@@ -20,6 +20,7 @@ export declare class TrackersService {
     } & {
         id: string;
         name: string;
+        notifyOnActivityUpdate: boolean;
         createdAt: Date;
         updatedAt: Date;
         ownerId: string;
@@ -32,6 +33,7 @@ export declare class TrackersService {
         };
         id: string;
         name: string;
+        notifyOnActivityUpdate: boolean;
         createdAt: Date;
         updatedAt: Date;
         ownerId: string;
@@ -40,8 +42,8 @@ export declare class TrackersService {
         members: ({
             user: {
                 id: string;
-                email: string;
                 name: string;
+                email: string;
                 avatarUrl: string | null;
             };
         } & {
@@ -57,8 +59,8 @@ export declare class TrackersService {
                 name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                sortOrder: number;
                 isActive: boolean;
+                sortOrder: number;
                 habitId: string;
             }[];
         } & {
@@ -66,14 +68,15 @@ export declare class TrackersService {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            icon: string | null;
-            sortOrder: number;
-            isActive: boolean;
             trackerId: string;
+            isActive: boolean;
+            sortOrder: number;
+            icon: string | null;
         })[];
     } & {
         id: string;
         name: string;
+        notifyOnActivityUpdate: boolean;
         createdAt: Date;
         updatedAt: Date;
         ownerId: string;
@@ -81,6 +84,7 @@ export declare class TrackersService {
     update(trackerId: string, dto: UpdateTrackerDto): Promise<{
         id: string;
         name: string;
+        notifyOnActivityUpdate: boolean;
         createdAt: Date;
         updatedAt: Date;
         ownerId: string;

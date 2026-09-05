@@ -42,10 +42,17 @@ let ProgressService = class ProgressService {
             this.prisma.dailyHabit.findMany({ where: { date, habit: { trackerId } } }),
             this.prisma.dailySubtaskCompletion.findMany({ where: { date, subtask: { habit: { trackerId } } } }),
         ]);
-        const total = habits.length;
+        const total = habits.reduce((acc, h) => acc + (h.subtasks.length === 0 ? 1 : h.subtasks.length), 0);
         const results = members.map((m) => {
             const { habitCompletedSet, subtaskCompletedSet } = (0, habit_completion_util_1.buildCompletedSets)(habitCompletions, subtaskCompletions, m.userId);
-            const completed = habits.filter((h) => (0, habit_completion_util_1.isHabitCompleteForUser)(h, habitCompletedSet, subtaskCompletedSet)).length;
+            const completed = habits.reduce((acc, h) => {
+                if (h.subtasks.length === 0) {
+                    return acc + ((0, habit_completion_util_1.isHabitCompleteForUser)(h, habitCompletedSet, subtaskCompletedSet) ? 1 : 0);
+                }
+                else {
+                    return acc + h.subtasks.filter(s => subtaskCompletedSet.has(s.id)).length;
+                }
+            }, 0);
             return {
                 userId: m.userId,
                 name: m.user.name,
@@ -68,7 +75,7 @@ let ProgressService = class ProgressService {
             this.getActiveHabitsWithSubtasks(trackerId),
             this.getMembers(trackerId),
         ]);
-        const total = habits.length;
+        const total = habits.reduce((acc, h) => acc + (h.subtasks.length === 0 ? 1 : h.subtasks.length), 0);
         const from = (0, date_util_1.parseCalendarDate)(days[0]);
         const to = (0, date_util_1.parseCalendarDate)(days[days.length - 1]);
         const [habitCompletions, subtaskCompletions] = await Promise.all([
@@ -83,7 +90,14 @@ let ProgressService = class ProgressService {
                 const hc = habitCompletions.filter((c) => c.date.toISOString().slice(0, 10) === dayDate);
                 const sc = subtaskCompletions.filter((c) => c.date.toISOString().slice(0, 10) === dayDate);
                 const { habitCompletedSet, subtaskCompletedSet } = (0, habit_completion_util_1.buildCompletedSets)(hc, sc, m.userId);
-                const completed = habits.filter((h) => (0, habit_completion_util_1.isHabitCompleteForUser)(h, habitCompletedSet, subtaskCompletedSet)).length;
+                const completed = habits.reduce((acc, h) => {
+                    if (h.subtasks.length === 0) {
+                        return acc + ((0, habit_completion_util_1.isHabitCompleteForUser)(h, habitCompletedSet, subtaskCompletedSet) ? 1 : 0);
+                    }
+                    else {
+                        return acc + h.subtasks.filter(s => subtaskCompletedSet.has(s.id)).length;
+                    }
+                }, 0);
                 return {
                     date: dayStr,
                     completed,

@@ -14,24 +14,34 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const authorization_service_1 = require("../common/authorization.service");
 const date_util_1 = require("../common/date.util");
+const notifications_service_1 = require("../notifications/notifications.service");
 let DailyHabitsService = class DailyHabitsService {
-    constructor(prisma, authz) {
+    constructor(prisma, authz, notificationsService) {
         this.prisma = prisma;
         this.authz = authz;
+        this.notificationsService = notificationsService;
     }
     async setHabitCompletion(userId, habitId, dto) {
         await this.authz.requireHabitAccess(userId, habitId);
         const date = (0, date_util_1.parseCalendarDate)(dto.date);
-        return this.prisma.dailyHabit.upsert({
+        const result = await this.prisma.dailyHabit.upsert({
             where: { habitId_userId_date: { habitId, userId, date } },
             create: { habitId, userId, date, completed: dto.completed, completedAt: dto.completed ? new Date() : null },
             update: { completed: dto.completed, completedAt: dto.completed ? new Date() : null },
         });
+        if (dto.completed) {
+            const user = await this.prisma.user.findUnique({ where: { id: userId } });
+            const habit = await this.prisma.habit.findUnique({ where: { id: habitId }, include: { tracker: true } });
+            if (user && habit && habit.tracker.notifyOnActivityUpdate) {
+                this.notificationsService.broadcastActivityCompletion(habit.trackerId, habit.name, userId, user.name).catch(() => { });
+            }
+        }
+        return result;
     }
     async setSubtaskCompletion(userId, subtaskId, dto) {
         await this.authz.requireSubtaskAccess(userId, subtaskId);
         const date = (0, date_util_1.parseCalendarDate)(dto.date);
-        return this.prisma.dailySubtaskCompletion.upsert({
+        const result = await this.prisma.dailySubtaskCompletion.upsert({
             where: { subtaskId_userId_date: { subtaskId, userId, date } },
             create: {
                 subtaskId,
@@ -42,6 +52,18 @@ let DailyHabitsService = class DailyHabitsService {
             },
             update: { completed: dto.completed, completedAt: dto.completed ? new Date() : null },
         });
+        if (dto.completed) {
+            const user = await this.prisma.user.findUnique({ where: { id: userId } });
+            const subtask = await this.prisma.habitSubtask.findUnique({
+                where: { id: subtaskId },
+                include: { habit: { include: { tracker: true } } }
+            });
+            if (user && subtask && subtask.habit.tracker.notifyOnActivityUpdate) {
+                const activityName = `${subtask.habit.name} - ${subtask.name}`;
+                this.notificationsService.broadcastActivityCompletion(subtask.habit.trackerId, activityName, userId, user.name).catch(() => { });
+            }
+        }
+        return result;
     }
     async getForTrackerAndDate(userId, trackerId, dateStr) {
         await this.authz.getMembership(userId, trackerId);
@@ -61,6 +83,7 @@ exports.DailyHabitsService = DailyHabitsService;
 exports.DailyHabitsService = DailyHabitsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        authorization_service_1.AuthorizationService])
+        authorization_service_1.AuthorizationService,
+        notifications_service_1.NotificationsService])
 ], DailyHabitsService);
 //# sourceMappingURL=daily-habits.service.js.map

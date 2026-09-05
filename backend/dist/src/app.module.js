@@ -21,6 +21,7 @@ const daily_habits_module_1 = require("./daily-habits/daily-habits.module");
 const dashboard_module_1 = require("./dashboard/dashboard.module");
 const progress_module_1 = require("./progress/progress.module");
 const invitations_module_1 = require("./invitations/invitations.module");
+const whatsapp_module_1 = require("./whatsapp/whatsapp.module");
 const notifications_module_1 = require("./notifications/notifications.module");
 const scheduler_module_1 = require("./scheduler/scheduler.module");
 let AppModule = class AppModule {
@@ -42,6 +43,7 @@ exports.AppModule = AppModule = __decorate([
             dashboard_module_1.DashboardModule,
             progress_module_1.ProgressModule,
             invitations_module_1.InvitationsModule,
+            whatsapp_module_1.WhatsAppModule,
             notifications_module_1.NotificationsModule,
             scheduler_module_1.SchedulerModule,
         ],

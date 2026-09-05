@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { useTrackerMembers, useRemoveMember } from '@/hooks/use-invitations';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';

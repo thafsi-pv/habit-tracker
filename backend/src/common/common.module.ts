@@ -1,4 +1,4 @@
-import { Global, Module, Controller } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { AuthorizationService } from './authorization.service';
 import { TrackerMemberGuard } from './guards/tracker-member.guard';
 import { HealthController } from './health.controller';

@@ -50,16 +50,27 @@ let DashboardService = class DashboardService {
                 completed: subtaskCompletedSet.has(s.id),
             })),
         }));
-        const totalHabits = habits.length;
-        const completedHabits = myHabits.filter((h) => h.subtasks.length === 0 ? h.completed : h.subtasks.every((s) => s.completed)).length;
+        let totalItems = 0;
+        let completedItems = 0;
+        myHabits.forEach((h) => {
+            if (h.subtasks.length === 0) {
+                totalItems++;
+                if (h.completed)
+                    completedItems++;
+            }
+            else {
+                totalItems += h.subtasks.length;
+                completedItems += h.subtasks.filter((s) => s.completed).length;
+            }
+        });
         const groupProgress = await this.progressService.getDailyProgress(userId, trackerId, date);
         return {
             date,
             userName: user.name,
             myProgress: {
-                completed: completedHabits,
-                total: totalHabits,
-                percent: totalHabits === 0 ? 0 : Math.round((completedHabits / totalHabits) * 100),
+                completed: completedItems,
+                total: totalItems,
+                percent: totalItems === 0 ? 0 : Math.round((completedItems / totalItems) * 100),
             },
             myHabits,
             groupProgress: groupProgress.members,

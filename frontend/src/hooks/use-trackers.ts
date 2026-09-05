@@ -25,6 +25,18 @@ export function useCreateTracker() {
   });
 }
 
+export function useUpdateTracker() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ trackerId, ...data }: { trackerId: string; name?: string; notifyOnActivityUpdate?: boolean }) =>
+      (await api.patch<Tracker>(`/trackers/${trackerId}`, data)).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trackers'] });
+      queryClient.invalidateQueries({ queryKey: ['tracker'] });
+    },
+  });
+}
+
 export function useCreateHabit(trackerId: string) {
   const queryClient = useQueryClient();
   return useMutation({

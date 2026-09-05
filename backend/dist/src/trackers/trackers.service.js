@@ -59,7 +59,13 @@ let TrackersService = class TrackersService {
         });
     }
     async update(trackerId, dto) {
-        return this.prisma.tracker.update({ where: { id: trackerId }, data: { name: dto.name } });
+        return this.prisma.tracker.update({
+            where: { id: trackerId },
+            data: {
+                name: dto.name,
+                ...(dto.notifyOnActivityUpdate !== undefined && { notifyOnActivityUpdate: dto.notifyOnActivityUpdate })
+            }
+        });
     }
     async remove(trackerId) {
         await this.prisma.tracker.delete({ where: { id: trackerId } });
