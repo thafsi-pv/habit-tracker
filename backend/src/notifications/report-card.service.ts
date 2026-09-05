@@ -4,11 +4,17 @@ import { Resvg } from '@resvg/resvg-js';
 import * as fs from 'fs';
 import * as path from 'path';
 
+interface SubtaskRow {
+  name: string;
+  completed: boolean;
+}
+
 interface HabitRow {
   name: string;
   icon: string | null;
   completed: boolean;
   streak: number;
+  subtasks: SubtaskRow[];
 }
 
 interface MemberCardData {
@@ -202,16 +208,58 @@ export class ReportCardService {
       );
     };
 
+    // ─── Subtask Row ──────────────────────────────────────────────────────────
+    const subtaskRow = (sub: SubtaskRow) => {
+      const done = sub.completed;
+      return h('div', {
+        style: {
+          display: 'flex', alignItems: 'center',
+          background: done ? '#F0FDF4' : '#F9FAFB',
+          border: `1.5px solid ${done ? '#BBF7D0' : C.border}`,
+          borderRadius: 12, padding: '7px 12px',
+          marginTop: 6,
+        },
+      },
+        // Connector / icon
+        h('div', {
+          style: {
+            fontSize: 16, color: done ? C.green : C.muted,
+            marginRight: 8, fontWeight: 700,
+          },
+        }, '└─'),
+        // Subtask name
+        h('div', {
+          style: {
+            flex: 1, fontSize: 18, fontWeight: 500,
+            color: done ? '#15803D' : C.text,
+            fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
+          },
+        }, sub.name),
+        // Status dot / checkmark
+        h('div', {
+          style: {
+            width: 22, height: 22, borderRadius: '50%',
+            background: done ? C.green : '#F3F4F6',
+            border: `1.5px solid ${done ? C.green : C.border}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 12, color: done ? C.white : C.muted, fontWeight: 900,
+          },
+        }, done ? '✓' : '○'),
+      );
+    };
+
     // ─── Habit Pill ───────────────────────────────────────────────────────────
     const habitPill = (habit: HabitRow) => {
       const done = habit.completed;
-      return h('div', {
+      const subtasks = habit.subtasks || [];
+      const hasSubtasks = subtasks.length > 0;
+
+      const mainPill = h('div', {
         style: {
           display: 'flex', alignItems: 'center',
           background: done ? C.greenSoft : '#F9FAFB',
           border: `1.5px solid ${done ? C.green : C.border}`,
           borderRadius: 16, padding: '10px 14px',
-          marginBottom: 8,
         },
       },
         // Icon bubble
@@ -252,6 +300,27 @@ export class ReportCardService {
             fontSize: 14, color: done ? C.white : C.muted, fontWeight: 900,
           },
         }, done ? '✓' : '○'),
+      );
+
+      if (!hasSubtasks) {
+        return h('div', { style: { display: 'flex', flexDirection: 'column', marginBottom: 8 } }, mainPill);
+      }
+
+      return h('div', {
+        style: {
+          display: 'flex', flexDirection: 'column',
+          marginBottom: 8,
+        },
+      },
+        mainPill,
+        h('div', {
+          style: {
+            display: 'flex', flexDirection: 'column',
+            marginLeft: 16,
+          },
+        },
+          ...subtasks.map((sub) => subtaskRow(sub)),
+        ),
       );
     };
 

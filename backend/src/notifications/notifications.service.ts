@@ -7,20 +7,39 @@ import { ProgressService } from '../progress/progress.service';
 import { ReportCardService } from './report-card.service';
 import { todayInTimezone } from '../common/date.util';
 
+interface SubtaskReport {
+  name: string;
+  completed: boolean;
+}
+
+interface HabitReport {
+  name: string;
+  icon: string | null;
+  completed: boolean;
+  streak: number;
+  subtasks: SubtaskReport[];
+}
+
 interface MemberReport {
   name: string;
   isMaster: boolean;
-  habits: { name: string; icon: string | null; completed: boolean; streak: number }[];
+  habits: HabitReport[];
   completed: number;
   total: number;
   percent: number;
 }
 
-function formatHabitLine(h: { name: string; icon: string | null; completed: boolean; streak: number }): string {
+function formatHabitLine(h: HabitReport): string[] {
   const icon = h.icon ?? '•';
   const status = h.completed ? '✅' : '❌';
   const streak = h.streak > 0 ? ` 🔥 ${h.streak} day streak` : '';
-  return `  ${icon} ${h.name}  ${status}${streak}`;
+  const lines = [`  ${icon} ${h.name}  ${status}${streak}`];
+  if (h.subtasks && h.subtasks.length > 0) {
+    for (const sub of h.subtasks) {
+      lines.push(`     └─ ${sub.completed ? '✅' : '❌'} ${sub.name}`);
+    }
+  }
+  return lines;
 }
 
 function formatMemberSection(member: MemberReport, isCurrentUser: boolean): string[] {
@@ -31,7 +50,7 @@ function formatMemberSection(member: MemberReport, isCurrentUser: boolean): stri
   ];
 
   for (const h of member.habits) {
-    lines.push(formatHabitLine(h));
+    lines.push(...formatHabitLine(h));
     lines.push('');  // newline between each task
   }
 
@@ -167,6 +186,10 @@ export class NotificationsService {
               icon: h.icon,
               completed: h.subtasks.length === 0 ? h.completed : h.subtasks.every((s) => s.completed),
               streak,
+              subtasks: (h.subtasks || []).map((s) => ({
+                name: s.name,
+                completed: s.completed,
+              })),
             };
           }),
           completed: dashboard.myProgress.completed,
