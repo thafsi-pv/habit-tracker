@@ -1,4 +1,4 @@
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { usePendingInvitations, useAcceptInvitation } from '@/hooks/use-invitations';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

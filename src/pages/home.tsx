@@ -83,8 +83,30 @@ export default function Home() {
               <HabitCard
                 key={h.id}
                 habit={h}
-                onToggleHabit={(habitId, completed) => toggleHabit.mutate({ habitId, completed })}
-                onToggleSubtask={(subtaskId, completed) => toggleSubtask.mutate({ subtaskId, completed })}
+                onToggleHabit={(habitId, completed) => {
+                  import('react-hot-toast').then(({ default: toast }) => {
+                    toast.promise(
+                      toggleHabit.mutateAsync({ habitId, completed }),
+                      {
+                        loading: completed ? 'Marking as complete...' : 'Marking as incomplete...',
+                        success: completed ? 'Habit completed!' : 'Habit updated',
+                        error: 'Failed to update habit'
+                      }
+                    );
+                  });
+                }}
+                onToggleSubtask={(subtaskId, completed) => {
+                  import('react-hot-toast').then(({ default: toast }) => {
+                    toast.promise(
+                      toggleSubtask.mutateAsync({ subtaskId, completed }),
+                      {
+                        loading: completed ? 'Marking as complete...' : 'Marking as incomplete...',
+                        success: completed ? 'Subtask completed!' : 'Subtask updated',
+                        error: 'Failed to update subtask'
+                      }
+                    );
+                  });
+                }}
               />
             ))}
             {isMaster && activeTracker && <AddHabitDialog trackerId={activeTracker.id} />}

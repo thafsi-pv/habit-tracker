@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 import { useTracker } from '@/hooks/use-trackers';
 import { useDeleteHabit, useCreateSubtask } from '@/hooks/use-trackers';
 import {

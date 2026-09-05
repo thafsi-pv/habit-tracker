@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
-import { Toaster, toast } from 'sonner';
+import { Toaster, toast } from 'react-hot-toast';
 import App from './App';
 import { AuthProvider } from './hooks/use-auth';
 import { PWAInstallPrompt } from '@/components/pwa-install-prompt';
@@ -20,10 +20,20 @@ function PWAUpdates() {
 
   React.useEffect(() => {
     if (isUpdateAvailable) {
-      toast.info('App update available', {
-        action: { label: 'Refresh', onClick: applyUpdate },
-        duration: Infinity,
-      });
+      toast(
+        (t) => (
+          <span className="flex items-center gap-2">
+            App update available
+            <button 
+              onClick={() => { applyUpdate(); toast.dismiss(t.id); }}
+              className="px-2 py-1 bg-primary text-primary-foreground rounded text-sm"
+            >
+              Refresh
+            </button>
+          </span>
+        ),
+        { duration: Infinity, icon: 'ℹ️' }
+      );
     }
   }, [isUpdateAvailable, applyUpdate]);
 
@@ -38,7 +48,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <App />
           <PWAUpdates />
           <PWAInstallPrompt />
-          <Toaster position="top-center" richColors closeButton />
+          <Toaster position="bottom-center" />
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>

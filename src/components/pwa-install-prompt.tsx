@@ -1,7 +1,7 @@
 import { usePWA } from '@/hooks/use-pwa';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
-import { toast } from 'sonner';
+import toast from 'react-hot-toast';
 
 export function PWAInstallPrompt() {
   const { isInstalled, canInstall, promptInstall } = usePWA();
