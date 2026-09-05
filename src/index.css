@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 33% 98%;
+    --foreground: 222 20% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 20% 14%;
+    --primary: 158 64% 32%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 40 20% 94%;
+    --secondary-foreground: 222 20% 14%;
+    --muted: 40 20% 94%;
+    --muted-foreground: 222 10% 45%;
+    --accent: 158 64% 96%;
+    --accent-foreground: 158 64% 24%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 158 64% 32%;
+    --success-foreground: 0 0% 100%;
+    --streak: 27 96% 53%;
+    --border: 220 14% 90%;
+    --input: 220 14% 90%;
+    --ring: 158 64% 32%;
+    --radius: 0.85rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html {
+    /* Avoid rubber-band overscroll causing accidental horizontal scroll on mobile */
+    overscroll-behavior-y: none;
+  }
+}
+
+/* Large, comfortable tap targets on touch devices */
+button, a, input[type="checkbox"] {
+  touch-action: manipulation;
+}
