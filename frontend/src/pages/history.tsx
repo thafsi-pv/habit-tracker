@@ -26,7 +26,7 @@ export default function History() {
         <div className="space-y-2">
           {days.map((date) => {
             const isExpanded = expandedDate === date;
-            const myDay = weekly.members.find((m) => m.userId === user?.id)?.days.find(d => d.date === date);
+            const myDay = weekly.members.find((m) => m.userId === user?.id)?.days?.find(d => d.date === date);
 
             return (
               <Card key={date} className="overflow-hidden">

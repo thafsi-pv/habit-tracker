@@ -1,9 +1,9 @@
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { useCreateTracker } from '@/hooks/use-trackers';
-import { useActiveTracker } from '@/hooks/use-active-tracker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +14,7 @@ type FormValues = z.infer<typeof schema>;
 
 export default function CreateTracker() {
   const createTracker = useCreateTracker();
-  const { setActiveTrackerId } = useActiveTracker();
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -24,8 +24,9 @@ export default function CreateTracker() {
   const onSubmit = async (values: FormValues) => {
     try {
       const tracker = await createTracker.mutateAsync(values.name);
-      setActiveTrackerId(tracker.id);
+      localStorage.setItem('habit-tracker:active-tracker-id', tracker.id);
       toast.success('Tracker created — add your first habit!');
+      navigate('/', { replace: true });
     } catch (err: any) {
       toast.error(err?.response?.data?.message ?? 'Could not create tracker');
     }
