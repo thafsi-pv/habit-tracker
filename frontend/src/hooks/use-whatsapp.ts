@@ -4,16 +4,7 @@ import { io, type Socket } from 'socket.io-client';
 import { api } from '@/lib/api';
 import type { WhatsAppStatus } from '@/types';
 
-const getWsUrl = () => {
-  if (import.meta.env.VITE_WS_URL) return import.meta.env.VITE_WS_URL;
-  if (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL.startsWith('http')) {
-    return import.meta.env.VITE_API_URL;
-  }
-  if (import.meta.env.PROD) return 'https://habit-tracker-backend-y3di.onrender.com';
-  return 'http://localhost:3000';
-};
-
-const WS_URL = getWsUrl();
+const WS_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
 export function useWhatsAppStatus() {
   const queryClient = useQueryClient();

@@ -16,9 +16,10 @@ import { ManageMembersDialog } from '@/components/manage-members-dialog';
 import { InviteMemberDialog } from '@/components/invite-member-dialog';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function Settings() {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { user, refetch } = useAuth();
   const { activeTracker, trackers, setActiveTrackerId } = useActiveTracker();
@@ -41,7 +42,8 @@ export default function Settings() {
 
   const logout = async () => {
     await api.post('/auth/logout');
-    refetch();
+    localStorage.removeItem('habit-tracker:active-tracker-id');
+    queryClient.clear();
     navigate('/login', { replace: true });
   };
 
