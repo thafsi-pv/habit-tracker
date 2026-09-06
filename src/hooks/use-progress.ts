@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import type { MonthlyProgress, WeeklyProgress } from '@/types';
+import type { MonthlyProgress, WeeklyProgress, DailyProgressResponse } from '@/types';
 
-export function useDailyProgress(trackerId: string | undefined, date: string) {
+export function useDailyProgress(trackerId: string | undefined, date: string | null | undefined) {
   return useQuery({
     queryKey: ['progress', trackerId, 'daily', date],
-    queryFn: async () => (await api.get('/progress/daily', { params: { trackerId, date } })).data,
-    enabled: !!trackerId,
+    queryFn: async () => (await api.get<DailyProgressResponse>('/progress/daily', { params: { trackerId, date } })).data,
+    enabled: !!trackerId && !!date,
   });
 }
 

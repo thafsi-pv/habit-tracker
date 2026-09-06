@@ -65,6 +65,29 @@ export interface WeeklyProgress {
   members: { userId: string; name: string; days: { date: string; completed: number; total: number; percent: number }[] }[];
 }
 
+export interface DailyHabitDetail {
+  id: string;
+  name: string;
+  icon: string | null;
+  completed: boolean;
+  subtasks: { id: string; name: string; completed: boolean }[];
+}
+
+export interface DailyMemberProgress {
+  userId: string;
+  name: string;
+  avatarUrl: string | null;
+  completed: number;
+  total: number;
+  percent: number;
+  habits: DailyHabitDetail[];
+}
+
+export interface DailyProgressResponse {
+  date: string;
+  members: DailyMemberProgress[];
+}
+
 export interface MonthlyHabitStat {
   habitId: string;
   name: string;

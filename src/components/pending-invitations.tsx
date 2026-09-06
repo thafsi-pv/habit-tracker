@@ -1,4 +1,5 @@
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import { usePendingInvitations, useAcceptInvitation } from '@/hooks/use-invitations';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { Mail } from 'lucide-react';
 export function PendingInvitations() {
   const { data: invitations } = usePendingInvitations();
   const accept = useAcceptInvitation();
+  const navigate = useNavigate();
 
   if (!invitations || invitations.length === 0) return null;
 
@@ -26,7 +28,11 @@ export function PendingInvitations() {
               size="sm"
               onClick={() =>
                 accept.mutate(inv.id, {
-                  onSuccess: () => toast.success(`Joined ${inv.tracker?.name}`),
+                  onSuccess: () => {
+                    localStorage.setItem('habit-tracker:active-tracker-id', inv.tracker?.id || '');
+                    toast.success(`Joined ${inv.tracker?.name}`);
+                    navigate('/', { replace: true });
+                  },
                   onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Could not accept invite'),
                 })
               }
