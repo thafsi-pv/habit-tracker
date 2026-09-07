@@ -274,12 +274,13 @@ export default function History() {
           {days.map((date) => {
             const isExpanded = expandedDate === date;
             const { formatted, relativeTag } = formatDateLabel(date);
-            const myDay = weekly.members
+            const members = weekly?.members || [];
+            const myDay = members
               .find((m) => m.userId === user?.id)
               ?.days?.find((d) => d.date === date);
 
-            const allMembersDay = weekly.members
-              .map((m) => m.days.find((d) => d.date === date))
+            const allMembersDay = members
+              .map((m) => m.days?.find((d) => d.date === date))
               .filter(Boolean);
             const totalGroupCompleted = allMembersDay.reduce((acc, d) => acc + (d?.completed || 0), 0);
             const totalGroupItems = allMembersDay.reduce((acc, d) => acc + (d?.total || 0), 0);
