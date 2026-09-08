@@ -1,10 +1,12 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthorizationService } from '../common/authorization.service';
 import { CreateHabitDto, UpdateHabitDto } from './dto/habit.dto';
+import { RedisService } from '../redis/redis.service';
 export declare class HabitsService {
     private prisma;
     private authz;
-    constructor(prisma: PrismaService, authz: AuthorizationService);
+    private redis;
+    constructor(prisma: PrismaService, authz: AuthorizationService, redis: RedisService);
     create(userId: string, dto: CreateHabitDto): Promise<{
         id: string;
         name: string;

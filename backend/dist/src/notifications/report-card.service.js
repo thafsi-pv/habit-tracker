@@ -49,12 +49,299 @@ const satori_1 = __importDefault(require("satori"));
 const resvg_js_1 = require("@resvg/resvg-js");
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
-const ILLUSTRATIONS = {
-    star: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="80" font-size="80">⭐</text></svg>',
-    rocket: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="80" font-size="80">🚀</text></svg>',
-    trophy: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="80" font-size="80">🏆</text></svg>',
-    sparkles: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="80" font-size="80">✨</text></svg>',
-    fire: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="80" font-size="80">🔥</text></svg>',
+const SVGS = {
+    star: (size = 24, color = '#F59E0B') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            fill: color,
+            children: [{ type: 'polygon', props: { points: '12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26' } }],
+        },
+    }),
+    sun: (size = 56) => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'circle', props: { cx: 12, cy: 12, r: 5, fill: '#FBBF24' } },
+                { type: 'path', props: { d: 'M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42', stroke: '#F59E0B', strokeWidth: 2, strokeLinecap: 'round' } },
+            ],
+        },
+    }),
+    cloud: (size = 44) => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'path', props: { d: 'M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z', fill: '#BAE6FD' } },
+            ],
+        },
+    }),
+    plant: (size = 48) => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'path', props: { d: 'M7 14h10l-1.5 7h-7L7 14z', fill: '#B45309' } },
+                { type: 'path', props: { d: 'M12 14V6M12 6c-2-3-6-2-6 2s4 4 6 4M12 9c2-2 5-1 5 2s-3 3-5 3', stroke: '#10B981', strokeWidth: 2, strokeLinecap: 'round', fill: 'none' } },
+            ],
+        },
+    }),
+    trophy: (size = 56) => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'path', props: { d: 'M6 9V2h12v7a6 6 0 0 1-12 0Z', fill: '#F59E0B' } },
+                { type: 'path', props: { d: 'M6 4H3a2 2 0 0 0-2 2v1a4 4 0 0 0 4 4h1M18 4h3a2 2 0 0 1 2 2v1a4 4 0 0 1-4 4h-1', stroke: '#F59E0B', strokeWidth: 2, fill: 'none' } },
+                { type: 'path', props: { d: 'M12 15v4M8 22h8M10 19h4', stroke: '#D97706', strokeWidth: 2, strokeLinecap: 'round', fill: 'none' } },
+            ],
+        },
+    }),
+    rocket: (size = 56) => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'path', props: { d: 'M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z', fill: '#EF4444' } },
+                { type: 'path', props: { d: 'M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z', fill: '#3B82F6' } },
+                { type: 'circle', props: { cx: 15, cy: 9, r: 2, fill: '#FFFFFF' } },
+            ],
+        },
+    }),
+    avatarGirl: (size = 68) => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 64 64',
+            children: [
+                { type: 'circle', props: { cx: 32, cy: 32, r: 30, fill: '#DDD6FE' } },
+                { type: 'circle', props: { cx: 32, cy: 30, r: 16, fill: '#FDE047' } },
+                { type: 'circle', props: { cx: 32, cy: 28, r: 13, fill: '#FED7AA' } },
+                { type: 'circle', props: { cx: 28, cy: 28, r: 2, fill: '#1E293B' } },
+                { type: 'circle', props: { cx: 36, cy: 28, r: 2, fill: '#1E293B' } },
+                { type: 'path', props: { d: 'M29 33 Q32 36 35 33', stroke: '#E11D48', strokeWidth: 1.5, fill: 'none' } },
+                { type: 'path', props: { d: 'M18 54 Q32 44 46 54', fill: '#8B5CF6' } },
+            ],
+        },
+    }),
+    avatarBoy: (size = 68) => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 64 64',
+            children: [
+                { type: 'circle', props: { cx: 32, cy: 32, r: 30, fill: '#BBF7D0' } },
+                { type: 'circle', props: { cx: 32, cy: 26, r: 15, fill: '#334155' } },
+                { type: 'circle', props: { cx: 32, cy: 29, r: 13, fill: '#FED7AA' } },
+                { type: 'circle', props: { cx: 28, cy: 28, r: 2, fill: '#1E293B' } },
+                { type: 'circle', props: { cx: 36, cy: 28, r: 2, fill: '#1E293B' } },
+                { type: 'path', props: { d: 'M29 33 Q32 36 35 33', stroke: '#E11D48', strokeWidth: 1.5, fill: 'none' } },
+                { type: 'path', props: { d: 'M18 54 Q32 44 46 54', fill: '#10B981' } },
+            ],
+        },
+    }),
+    check: (size = 14, color = '#FFFFFF') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'path', props: { d: 'M5 13l4 4L19 7', stroke: color, strokeWidth: 3.5, strokeLinecap: 'round', strokeLinejoin: 'round', fill: 'none' } },
+            ],
+        },
+    }),
+    cross: (size = 14, color = '#FFFFFF') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'path', props: { d: 'M6 18L18 6M6 6l12 12', stroke: color, strokeWidth: 3.5, strokeLinecap: 'round', strokeLinejoin: 'round', fill: 'none' } },
+            ],
+        },
+    }),
+    crown: (size = 20, color = '#F59E0B') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'path', props: { d: 'M2 4l3 12h14l3-12-5 4-5-6-5 6-5-4z', fill: color } },
+                { type: 'path', props: { d: 'M5 18h14v2H5z', fill: color } },
+            ],
+        },
+    }),
+    calendar: (size = 18, color = '#64748B') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'rect', props: { x: 3, y: 4, width: 18, height: 18, rx: 2, ry: 2, stroke: color, strokeWidth: 2, fill: 'none' } },
+                { type: 'line', props: { x1: 16, y1: 2, x2: 16, y2: 6, stroke: color, strokeWidth: 2, strokeLinecap: 'round' } },
+                { type: 'line', props: { x1: 8, y1: 2, x2: 8, y2: 6, stroke: color, strokeWidth: 2, strokeLinecap: 'round' } },
+                { type: 'line', props: { x1: 3, y1: 10, x2: 21, y2: 10, stroke: color, strokeWidth: 2 } },
+            ],
+        },
+    }),
+    pin: (size = 18, color = '#EF4444') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'path', props: { d: 'M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z', fill: color } },
+                { type: 'circle', props: { cx: 12, cy: 9, r: 2.5, fill: '#FFFFFF' } },
+            ],
+        },
+    }),
+    corner: (size = 14, color = '#94A3B8') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'path', props: { d: 'M6 2v12h14', stroke: color, strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round', fill: 'none' } },
+            ],
+        },
+    }),
+    users: (size = 18, color = '#64748B') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'path', props: { d: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2', stroke: color, strokeWidth: 2, fill: 'none' } },
+                { type: 'circle', props: { cx: 9, cy: 7, r: 4, stroke: color, strokeWidth: 2, fill: 'none' } },
+                { type: 'path', props: { d: 'M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75', stroke: color, strokeWidth: 2, fill: 'none' } },
+            ],
+        },
+    }),
+    sparkle: (size = 20, color = '#7C3AED') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'path', props: { d: 'M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z', fill: color } },
+            ],
+        },
+    }),
+    book: (size = 24, color = '#6366F1') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'path', props: { d: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20', stroke: color, strokeWidth: 2, fill: 'none' } },
+                { type: 'path', props: { d: 'M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z', stroke: color, strokeWidth: 2, fill: 'none' } },
+            ],
+        },
+    }),
+    runner: (size = 24, color = '#10B981') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'circle', props: { cx: 14, cy: 5, r: 2, fill: color } },
+                { type: 'path', props: { d: 'M14 8l-3 4-3-1M11 12l2 4 4 2M8 11l-3 3M16 8l2 3', stroke: color, strokeWidth: 2, strokeLinecap: 'round', fill: 'none' } },
+            ],
+        },
+    }),
+    chat: (size = 24, color = '#8B5CF6') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'path', props: { d: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', fill: color } },
+            ],
+        },
+    }),
+    water: (size = 24, color = '#0EA5E9') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'path', props: { d: 'M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z', fill: color } },
+            ],
+        },
+    }),
+    code: (size = 24, color = '#059669') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'path', props: { d: 'M16 18l6-6-6-6M8 6l-6 6 6 6', stroke: color, strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', fill: 'none' } },
+            ],
+        },
+    }),
+    heart: (size = 24, color = '#E11D48') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'path', props: { d: 'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z', fill: color } },
+            ],
+        },
+    }),
+    meditation: (size = 24, color = '#F59E0B') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'circle', props: { cx: 12, cy: 5, r: 2.5, fill: color } },
+                { type: 'path', props: { d: 'M12 9v4M9 20l3-5 3 5M6 15l6-2 6 2', stroke: color, strokeWidth: 2, strokeLinecap: 'round', fill: 'none' } },
+            ],
+        },
+    }),
+    fallback: (size = 24, color = '#64748B') => ({
+        type: 'svg',
+        props: {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            children: [
+                { type: 'rect', props: { x: 3, y: 3, width: 18, height: 18, rx: 4, fill: '#F1F5F9', stroke: '#94A3B8', strokeWidth: 2 } },
+                { type: 'path', props: { d: 'M7 8h10M7 12h10M7 16h6', stroke: color, strokeWidth: 2, strokeLinecap: 'round' } },
+            ],
+        },
+    }),
 };
 let ReportCardService = ReportCardService_1 = class ReportCardService {
     constructor() {
@@ -78,83 +365,74 @@ let ReportCardService = ReportCardService_1 = class ReportCardService {
         }
         return this.cachedMalayalamFont;
     }
-    async render(params) {
-        const height = this.estimateHeight(params);
-        const malayalamFont = this.getMalayalamFont();
-        const fonts = [
-            { name: 'Noto Sans', data: this.getFont(), weight: 400, style: 'normal' },
-        ];
-        if (malayalamFont) {
-            fonts.push({ name: 'Noto Sans Malayalam', data: malayalamFont, weight: 400, style: 'normal' });
-        }
-        const loadAdditionalAsset = async (code, segment) => {
-            if (code === 'emoji') {
-                const codePoint = [...segment].map((c) => c.codePointAt(0).toString(16)).join('-');
-                const url = `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${codePoint}.svg`;
-                try {
-                    const res = await fetch(url);
-                    if (res.ok) {
-                        const svg = await res.text();
-                        return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
-                    }
-                }
-                catch {
-                }
-            }
-            return '';
-        };
-        const svg = await (0, satori_1.default)(this.buildJsx(params), {
-            width: 750,
-            height,
-            fonts,
-            loadAdditionalAsset,
-        });
-        const png = new resvg_js_1.Resvg(svg, { fitTo: { mode: 'width', value: 750 } }).render().asPng();
-        return png;
-    }
     estimateHeight(p) {
-        const base = 380;
         const allMembers = [p.currentUser, ...p.otherMembers];
-        const totalHabits = allMembers.reduce((s, m) => s + m.habits.length, 0);
         const memberCount = allMembers.length;
         const cardRows = Math.ceil(memberCount / 2);
-        const maxHabitsPerRow = Math.ceil(totalHabits / cardRows);
-        const memberHeight = cardRows * (200 + maxHabitsPerRow * 62);
-        return Math.max(1100, base + memberHeight + 60);
+        let totalCardRowsHeight = 0;
+        for (let r = 0; r < cardRows; r++) {
+            const m1 = allMembers[r * 2];
+            const m2 = allMembers[r * 2 + 1];
+            const count1 = (m1?.habits || []).reduce((acc, h) => acc + 1 + (h.subtasks?.length || 0), 0);
+            const count2 = (m2?.habits || []).reduce((acc, h) => acc + 1 + (h.subtasks?.length || 0), 0);
+            const maxItems = Math.max(count1, count2, 5);
+            const cardHeight = 70 + 40 + 42 + (maxItems * 58) + 50 + 48;
+            totalCardRowsHeight += cardHeight + 20;
+        }
+        const outerPadding = 64;
+        const whiteContainerPadding = 72;
+        const headerHeight = 150;
+        const summaryHeight = 170;
+        const gap = 24;
+        return outerPadding + whiteContainerPadding + headerHeight + totalCardRowsHeight + gap + summaryHeight + 20;
+    }
+    async render(params) {
+        const width = 1080;
+        const height = this.estimateHeight(params);
+        const font = this.getFont();
+        const malayalamFont = this.getMalayalamFont();
+        const fonts = [
+            { name: 'Noto Sans', data: font, weight: 400, style: 'normal' },
+            { name: 'Noto Sans', data: font, weight: 600, style: 'normal' },
+            { name: 'Noto Sans', data: font, weight: 700, style: 'normal' },
+            { name: 'Noto Sans', data: font, weight: 900, style: 'normal' },
+        ];
+        if (malayalamFont) {
+            fonts.push({ name: 'Noto Sans Malayalam', data: malayalamFont, weight: 400, style: 'normal' }, { name: 'Noto Sans Malayalam', data: malayalamFont, weight: 600, style: 'normal' }, { name: 'Noto Sans Malayalam', data: malayalamFont, weight: 700, style: 'normal' }, { name: 'Noto Sans Malayalam', data: malayalamFont, weight: 900, style: 'normal' });
+        }
+        const svg = await (0, satori_1.default)(this.buildJsx(params), {
+            width,
+            height,
+            fonts,
+        });
+        const png = new resvg_js_1.Resvg(svg, { fitTo: { mode: 'width', value: width } }).render().asPng();
+        return png;
     }
     buildJsx(p) {
-        const C = {
-            bg: '#FAFAFA',
-            cardBg: '#FFFFFF',
-            heroBg: '#1A1A2E',
-            accent: '#7C3AED',
-            accentSoft: '#EDE9FE',
-            teal: '#0D9488',
-            tealSoft: '#CCFBF1',
-            green: '#059669',
-            greenSoft: '#D1FAE5',
-            red: '#E11D48',
-            redSoft: '#FFE4E6',
-            orange: '#EA580C',
-            text: '#111827',
-            muted: '#6B7280',
-            border: '#E5E7EB',
-            white: '#FFFFFF',
-            gold: '#F59E0B',
-        };
         const allMembers = [p.currentUser, ...p.otherMembers];
         const totalCompleted = allMembers.reduce((s, m) => s + m.completed, 0);
         const totalItems = allMembers.reduce((s, m) => s + m.total, 0);
         const overallPercent = totalItems > 0 ? Math.round((totalCompleted / totalItems) * 100) : 0;
+        const pendingCount = Math.max(0, totalItems - totalCompleted);
         const mood = overallPercent === 100 ? 'perfect' : overallPercent >= 75 ? 'great' : 'push';
         const moodConfig = {
-            perfect: { emoji: '🏆', msg: 'Everyone nailed it today!', color: C.gold },
-            great: { emoji: '🚀', msg: 'Great teamwork, keep it up!', color: C.accent },
-            push: { emoji: '💪', msg: "Let's push harder tomorrow!", color: C.teal },
+            perfect: { msg: 'Amazing progress today! Everyone nailed it!' },
+            great: { msg: 'Amazing progress today! Keep it up!' },
+            push: { msg: "Good effort today! Let's push higher tomorrow!" },
         }[mood];
         const h = (type, props = {}, ...children) => {
             const cleaned = children.filter((c) => c !== null && c !== undefined && c !== false);
             const next = { ...props };
+            const style = { ...(next.style || {}) };
+            if (type === 'div') {
+                if (!style.display) {
+                    style.display = 'flex';
+                }
+                if (!style.flexDirection) {
+                    style.flexDirection = 'column';
+                }
+            }
+            next.style = style;
             if (cleaned.length === 0) { }
             else if (cleaned.length === 1) {
                 next.children = cleaned[0];
@@ -164,185 +442,631 @@ let ReportCardService = ReportCardService_1 = class ReportCardService {
             }
             return { type, props: next };
         };
-        const pill = (text, bg, fg) => h('div', {
-            style: {
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: bg, color: fg,
-                borderRadius: 100, padding: '4px 14px',
-                fontSize: 20, fontWeight: 700,
+        const PALETTES = [
+            {
+                primary: '#7C3AED',
+                primaryDark: '#5B21B6',
+                accentBg: '#F5F3FF',
+                cardBorder: '#DDD6FE',
+                headerBg: '#EDE9FE',
+                headerText: '#5B21B6',
+                barFilled: '#8B5CF6',
+                barEmpty: '#EDE9FE',
+                avatar: SVGS.avatarGirl(68),
             },
-        }, text);
-        const ringProgress = (percent, color, size) => {
-            const deg = Math.round((percent / 100) * 360);
-            return h('div', {
-                style: {
-                    width: size, height: size,
-                    borderRadius: '50%',
-                    background: `conic-gradient(${color} ${deg}deg, #E5E7EB ${deg}deg)`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    position: 'relative',
-                },
-            }, h('div', {
-                style: {
-                    width: size - 20, height: size - 20,
-                    borderRadius: '50%',
-                    background: C.cardBg,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexDirection: 'column',
-                },
-            }, h('div', { style: { fontSize: size * 0.28, fontWeight: 900, color: C.text, lineHeight: 1 } }, `${percent}%`), h('div', { style: { fontSize: size * 0.13, color: C.muted, marginTop: 2 } }, 'done')));
-        };
-        const habitPill = (habit) => {
-            const done = habit.completed;
-            return h('div', {
-                style: {
-                    display: 'flex', alignItems: 'center',
-                    background: done ? C.greenSoft : '#F9FAFB',
-                    border: `1.5px solid ${done ? C.green : C.border}`,
-                    borderRadius: 16, padding: '10px 14px',
-                    marginBottom: 8,
-                },
-            }, h('div', {
-                style: {
-                    width: 36, height: 36, borderRadius: '50%',
-                    background: done ? C.green : C.border,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 18, marginRight: 12, flexShrink: 0,
-                },
-            }, habit.icon ?? '✦'), h('div', {
-                style: {
-                    flex: 1, fontSize: 22, fontWeight: 600,
-                    color: done ? C.green : C.text,
-                    fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
-                },
-            }, habit.name), habit.streak > 0
-                ? h('div', {
+            {
+                primary: '#059669',
+                primaryDark: '#065F46',
+                accentBg: '#F0FDF4',
+                cardBorder: '#BBF7D0',
+                headerBg: '#DCFCE7',
+                headerText: '#065F46',
+                barFilled: '#10B981',
+                barEmpty: '#DCFCE7',
+                avatar: SVGS.avatarBoy(68),
+            },
+            {
+                primary: '#0284C7',
+                primaryDark: '#0369A1',
+                accentBg: '#F0F9FF',
+                cardBorder: '#BAE6FD',
+                headerBg: '#E0F2FE',
+                headerText: '#0369A1',
+                barFilled: '#0EA5E9',
+                barEmpty: '#E0F2FE',
+                avatar: SVGS.avatarBoy(68),
+            },
+            {
+                primary: '#EA580C',
+                primaryDark: '#C2410C',
+                accentBg: '#FFF7ED',
+                cardBorder: '#FED7AA',
+                headerBg: '#FFEDD5',
+                headerText: '#C2410C',
+                barFilled: '#F97316',
+                barEmpty: '#FFEDD5',
+                avatar: SVGS.avatarGirl(68),
+            },
+        ];
+        const segmentedBar = (percent, filledColor, emptyColor) => {
+            const totalSegments = 10;
+            const filledCount = Math.round((percent / 100) * totalSegments);
+            const segments = [];
+            for (let i = 0; i < totalSegments; i++) {
+                const isFilled = i < filledCount;
+                segments.push(h('div', {
                     style: {
-                        display: 'flex', alignItems: 'center', gap: 4,
-                        background: '#FEF3C7', borderRadius: 10,
-                        padding: '3px 10px', marginRight: 8,
-                        fontSize: 18, color: C.orange, fontWeight: 700,
+                        flex: 1,
+                        height: 12,
+                        borderRadius: 6,
+                        background: isFilled ? filledColor : emptyColor,
+                        marginRight: i < totalSegments - 1 ? 6 : 0,
                     },
-                }, `🔥 ${habit.streak}`)
-                : null, h('div', {
-                style: {
-                    width: 28, height: 28, borderRadius: '50%',
-                    background: done ? C.green : '#F3F4F6',
-                    border: `2px solid ${done ? C.green : C.border}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 14, color: done ? C.white : C.muted, fontWeight: 900,
-                },
-            }, done ? '✓' : '○'));
-        };
-        const memberCard = (m) => {
-            const accent = m.isCurrentUser ? C.accent : C.teal;
-            const accentSoft = m.isCurrentUser ? C.accentSoft : C.tealSoft;
-            const ringSize = 90;
+                }));
+            }
             return h('div', {
                 style: {
-                    display: 'flex', flexDirection: 'column',
-                    background: C.cardBg,
-                    borderRadius: 24,
-                    border: `2px solid ${m.isCurrentUser ? accent : C.border}`,
-                    overflow: 'hidden', flex: 1,
+                    display: 'flex',
+                    flexDirection: 'row',
+                    width: '100%',
+                    marginTop: 12,
+                    marginBottom: 16,
+                    boxSizing: 'border-box',
+                },
+            }, ...segments);
+        };
+        const habitRow = (habit) => {
+            const done = habit.completed;
+            const subtasks = habit.subtasks || [];
+            const hasSubtasks = subtasks.length > 0;
+            const completedSubCount = subtasks.filter((s) => s.completed).length;
+            const progressText = hasSubtasks
+                ? `${completedSubCount}/${subtasks.length}`
+                : done ? '1/1' : '0/1';
+            const resolveHabitIcon = (hRow) => {
+                const iconStr = (hRow.icon || '').trim().toLowerCase();
+                const nameStr = (hRow.name || '').toLowerCase();
+                if (iconStr === 'book' || iconStr === '📖' || iconStr === '📚' || iconStr === '📕' || nameStr.includes('read') || nameStr.includes('book')) {
+                    return SVGS.book(26, '#6366F1');
+                }
+                if (iconStr === 'exercise' || iconStr === 'run' || iconStr === '🏃' || iconStr === '🏋️' || iconStr === '🚴' || nameStr.includes('exercise') || nameStr.includes('run') || nameStr.includes('walk') || nameStr.includes('gym')) {
+                    return SVGS.runner(26, '#10B981');
+                }
+                if (iconStr === 'english' || iconStr === 'chat' || iconStr === '💬' || iconStr === '🗣️' || nameStr.includes('english') || nameStr.includes('chat') || nameStr.includes('practice')) {
+                    return SVGS.chat(26, '#8B5CF6');
+                }
+                if (iconStr === 'water' || iconStr === '💧' || iconStr === '🥤' || nameStr.includes('water') || nameStr.includes('drink')) {
+                    return SVGS.water(26, '#0EA5E9');
+                }
+                if (iconStr === 'code' || iconStr === '💻' || nameStr.includes('code') || nameStr.includes('dev') || nameStr.includes('program')) {
+                    return SVGS.code(26, '#059669');
+                }
+                if (iconStr === 'heart' || iconStr === '❤️' || iconStr === '💖' || nameStr.includes('heart') || nameStr.includes('health')) {
+                    return SVGS.heart(26, '#E11D48');
+                }
+                if (iconStr === 'pray' || iconStr === 'prayer' || iconStr === 'meditation' || iconStr === '🙏' || iconStr === '🧘' || nameStr.includes('pray') || nameStr.includes('meditat') || nameStr.includes('ദർബ')) {
+                    return SVGS.meditation(26, '#F59E0B');
+                }
+                if (iconStr === 'study' || iconStr === 'skill' || nameStr.includes('skill') || nameStr.includes('study') || nameStr.includes('learn')) {
+                    return SVGS.book(26, '#EC4899');
+                }
+                return SVGS.fallback(26, '#64748B');
+            };
+            const iconNode = resolveHabitIcon(habit);
+            const mainRow = h('div', {
+                style: {
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    width: '100%',
+                    height: 58,
+                    minHeight: 58,
+                    boxSizing: 'border-box',
+                    padding: '0 8px',
+                    borderBottom: hasSubtasks ? 'none' : '1px solid #F1F5F9',
                 },
             }, h('div', {
                 style: {
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    background: accentSoft, padding: '18px 20px',
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    flex: 1,
+                    minWidth: 0,
+                    overflow: 'hidden',
                 },
-            }, h('div', { style: { display: 'flex', flexDirection: 'column' } }, h('div', {
+            }, h('div', {
                 style: {
-                    fontSize: 26, fontWeight: 900, color: C.text,
-                    fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
-                    display: 'flex', alignItems: 'center', gap: 8,
+                    width: 38,
+                    height: 38,
+                    borderRadius: 10,
+                    background: '#F8FAFC',
+                    border: '1px solid #E2E8F0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
                 },
-            }, m.name, m.isMaster ? h('div', { style: { fontSize: 20 } }, '👑') : null, m.isCurrentUser ? pill('You', accent, C.white) : null), h('div', { style: { fontSize: 18, color: C.muted, marginTop: 4 } }, `${m.completed}/${m.total} activities`)), ringProgress(m.percent, accent, ringSize)), h('div', { style: { display: 'flex', flexDirection: 'column', padding: '16px 20px' } }, ...m.habits.map((habit) => habitPill(habit)), m.habits.length === 0
-                ? h('div', { style: { fontSize: 20, color: C.muted, textAlign: 'center', padding: 16 } }, 'No habits yet')
-                : null));
+            }, iconNode), h('div', {
+                style: {
+                    marginLeft: 12,
+                    fontSize: 18,
+                    fontWeight: 600,
+                    color: '#1E293B',
+                    fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                },
+            }, habit.name)), h('div', {
+                style: {
+                    width: 85,
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 16,
+                    fontWeight: 600,
+                    color: '#475569',
+                },
+            }, progressText), h('div', {
+                style: {
+                    width: 65,
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                },
+            }, h('div', {
+                style: {
+                    width: 28,
+                    height: 28,
+                    borderRadius: 14,
+                    background: done ? '#10B981' : '#EF4444',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                },
+            }, done ? SVGS.check(16, '#FFFFFF') : SVGS.cross(14, '#FFFFFF'))));
+            if (!hasSubtasks) {
+                return mainRow;
+            }
+            const subRows = subtasks.map((sub, idx) => {
+                const subDone = sub.completed;
+                const isLast = idx === subtasks.length - 1;
+                return h('div', {
+                    style: {
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        width: '100%',
+                        height: 44,
+                        minHeight: 44,
+                        boxSizing: 'border-box',
+                        padding: '0 8px 0 28px',
+                        borderBottom: isLast ? '1px solid #F1F5F9' : 'none',
+                    },
+                }, h('div', {
+                    style: {
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        flex: 1,
+                        minWidth: 0,
+                        overflow: 'hidden',
+                    },
+                }, h('div', { style: { display: 'flex', marginRight: 8, alignItems: 'center' } }, SVGS.corner(14, '#94A3B8')), h('div', {
+                    style: {
+                        fontSize: 15,
+                        fontWeight: 500,
+                        color: subDone ? '#059669' : '#64748B',
+                        fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                    },
+                }, sub.name)), h('div', {
+                    style: {
+                        width: 85,
+                        flexShrink: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 14,
+                        fontWeight: 500,
+                        color: '#64748B',
+                    },
+                }, subDone ? '1/1' : '0/1'), h('div', {
+                    style: {
+                        width: 65,
+                        flexShrink: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    },
+                }, h('div', {
+                    style: {
+                        width: 22,
+                        height: 22,
+                        borderRadius: 11,
+                        background: subDone ? '#10B981' : '#EF4444',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    },
+                }, subDone ? SVGS.check(12, '#FFFFFF') : SVGS.cross(10, '#FFFFFF'))));
+            });
+            return h('div', {
+                style: {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    width: '100%',
+                },
+            }, mainRow, ...subRows);
+        };
+        const memberCard = (m, index) => {
+            const theme = PALETTES[index % PALETTES.length];
+            return h('div', {
+                style: {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flex: 1,
+                    boxSizing: 'border-box',
+                    background: '#FFFFFF',
+                    borderRadius: 24,
+                    border: `2px solid ${theme.cardBorder}`,
+                    padding: '24px',
+                },
+            }, h('div', {
+                style: {
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    width: '100%',
+                    height: 70,
+                    boxSizing: 'border-box',
+                },
+            }, theme.avatar, h('div', {
+                style: {
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginLeft: 14,
+                    fontSize: 26,
+                    fontWeight: 900,
+                    color: theme.primaryDark,
+                    fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
+                },
+            }, h('div', { style: { display: 'flex' } }, m.name), h('div', { style: { display: 'flex', marginLeft: 8 } }, SVGS.star(20, '#F59E0B')), m.isMaster ? h('div', { style: { display: 'flex', marginLeft: 6 } }, SVGS.crown(20, '#F59E0B')) : null), h('div', {
+                style: {
+                    display: 'flex',
+                    marginLeft: 'auto',
+                    fontSize: 28,
+                    fontWeight: 900,
+                    color: theme.primary,
+                    flexShrink: 0,
+                },
+            }, `${m.percent}%`)), segmentedBar(m.percent, theme.barFilled, theme.barEmpty), h('div', {
+                style: {
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    width: '100%',
+                    height: 42,
+                    boxSizing: 'border-box',
+                    background: theme.headerBg,
+                    borderRadius: 12,
+                    padding: '0 12px',
+                    marginBottom: 6,
+                },
+            }, h('div', { style: { flex: 1, fontSize: 15, fontWeight: 700, color: theme.headerText } }, 'Habit'), h('div', { style: { width: 85, display: 'flex', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: theme.headerText } }, 'Progress'), h('div', { style: { width: 65, display: 'flex', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: theme.headerText } }, 'Status')), h('div', {
+                style: {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                },
+            }, ...m.habits.map((habit) => habitRow(habit)), m.habits.length === 0
+                ? h('div', { style: { fontSize: 16, color: '#94A3B8', textAlign: 'center', padding: '20px 0' } }, 'No habits yet')
+                : null), h('div', {
+                style: {
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    width: '100%',
+                    marginTop: 18,
+                    paddingTop: 8,
+                    boxSizing: 'border-box',
+                },
+            }, h('div', {
+                style: {
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: theme.primary,
+                },
+            }, `${m.completed}/${m.total} completed`), h('div', { style: { display: 'flex', alignItems: 'center' } }, SVGS.sparkle(20, theme.primary))));
         };
         const memberRows = [];
         for (let i = 0; i < allMembers.length; i += 2) {
             const left = allMembers[i];
             const right = allMembers[i + 1];
-            const rowChildren = [memberCard(left)];
+            const rowChildren = [memberCard(left, i)];
             if (right) {
-                rowChildren.push(h('div', { style: { width: 16 } }));
-                rowChildren.push(memberCard(right));
+                rowChildren.push(h('div', { style: { width: 24, flexShrink: 0 } }));
+                rowChildren.push(memberCard(right, i + 1));
             }
             else {
+                rowChildren.push(h('div', { style: { width: 24, flexShrink: 0 } }));
                 rowChildren.push(h('div', { style: { flex: 1 } }));
             }
             memberRows.push(h('div', {
-                style: { display: 'flex', flexDirection: 'row', width: '100%', marginBottom: 16 },
+                style: {
+                    display: 'flex',
+                    flexDirection: 'row',
+                    width: '100%',
+                    marginBottom: 20,
+                    boxSizing: 'border-box',
+                },
             }, ...rowChildren));
         }
         return h('div', {
             style: {
-                display: 'flex', flexDirection: 'column',
-                width: '100%', height: '100%',
-                background: C.bg,
+                display: 'flex',
+                flexDirection: 'column',
+                width: '100%',
+                height: '100%',
+                background: '#EFF6FF',
+                padding: '32px',
+                boxSizing: 'border-box',
                 fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
             },
         }, h('div', {
             style: {
-                display: 'flex', flexDirection: 'row', alignItems: 'center',
-                background: C.heroBg,
-                padding: '36px 48px 32px',
-            },
-        }, h('div', { style: { display: 'flex', flexDirection: 'column', flex: 1 } }, h('div', {
-            style: {
-                display: 'flex', alignItems: 'center', gap: 10,
-                background: 'rgba(255,255,255,0.08)', borderRadius: 12,
-                padding: '6px 16px', marginBottom: 16, alignSelf: 'flex-start',
-            },
-        }, h('div', { style: { fontSize: 22, color: '#A78BFA' } }, '📅'), h('div', { style: { fontSize: 20, color: '#C4B5FD', fontWeight: 600 } }, p.dateLabel)), h('div', {
-            style: { fontSize: 52, fontWeight: 900, color: C.white, lineHeight: 1.1, marginBottom: 10 },
-        }, 'Daily Report'), h('div', {
-            style: { fontSize: 28, fontWeight: 400, color: '#A78BFA', marginBottom: 6 },
-        }, `📌 ${p.trackerName}`), h('div', {
-            style: {
-                fontSize: 26, color: '#E0E7FF', marginTop: 8,
-                fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
-            },
-        }, `Hey ${p.userName}! 👋`)), h('div', {
-            style: {
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 120, marginLeft: 32,
-                background: 'rgba(255,255,255,0.05)',
-                borderRadius: 32, width: 160, height: 160,
-            },
-        }, p.currentUser.percent === 100 ? '🏆' : p.currentUser.percent >= 75 ? '🚀' : '✨')), h('div', { style: { display: 'flex', flexDirection: 'column', padding: '28px 40px 0' } }, h('div', {
-            style: {
-                fontSize: 22, fontWeight: 700, color: C.muted,
-                letterSpacing: 2, marginBottom: 16,
-                textTransform: 'uppercase',
-            },
-        }, '── Members ──'), ...memberRows), h('div', {
-            style: {
-                display: 'flex', alignItems: 'center',
-                background: C.heroBg, margin: '12px 40px 40px',
-                borderRadius: 24, padding: '24px 32px',
+                display: 'flex',
+                flexDirection: 'column',
+                width: '100%',
+                background: '#FFFFFF',
+                borderRadius: 32,
+                border: '2px solid #E2E8F0',
+                padding: '36px',
+                boxSizing: 'border-box',
             },
         }, h('div', {
             style: {
-                fontSize: 72, marginRight: 28,
-                background: 'rgba(255,255,255,0.06)', borderRadius: 20,
-                width: 96, height: 96,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                width: '100%',
+                marginBottom: 20,
+                boxSizing: 'border-box',
             },
-        }, moodConfig.emoji), h('div', { style: { display: 'flex', flexDirection: 'column', flex: 1 } }, h('div', {
-            style: { fontSize: 30, fontWeight: 900, color: C.white, marginBottom: 6 },
-        }, moodConfig.msg), h('div', {
-            style: { fontSize: 22, color: '#A78BFA' },
-        }, `Group total: ${totalCompleted}/${totalItems} · ${overallPercent}% complete`)), h('div', { style: { marginLeft: 24 } }, h('div', {
+        }, h('div', {
             style: {
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                flex: 1,
+            },
+        }, h('div', {
+            style: {
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+            },
+        }, SVGS.star(36, '#F59E0B'), h('div', {
+            style: {
+                fontSize: 40,
+                fontWeight: 900,
+                color: '#0F172A',
+                marginLeft: 10,
+            },
+        }, 'Daily Habit Report')), h('div', {
+            style: {
+                fontSize: 18,
+                fontWeight: 600,
+                color: '#475569',
+                marginTop: 6,
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+            },
+        }, h('div', { style: { display: 'flex', marginRight: 6 } }, SVGS.sun(18)), h('div', { style: { display: 'flex' } }, 'Morning Routine • '), h('div', { style: { display: 'flex', marginLeft: 6, marginRight: 6 } }, SVGS.pin(16, '#EF4444')), h('div', { style: { display: 'flex' } }, p.trackerName)), h('div', {
+            style: {
+                fontSize: 16,
+                fontWeight: 500,
+                color: '#64748B',
+                marginTop: 4,
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+            },
+        }, h('div', { style: { display: 'flex', marginRight: 6 } }, SVGS.calendar(16, '#64748B')), h('div', { style: { display: 'flex' } }, p.dateLabel)), h('div', {
+            style: {
+                fontSize: 20,
+                fontWeight: 700,
+                color: '#7C3AED',
+                marginTop: 8,
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                fontFamily: 'Noto Sans Malayalam, Noto Sans, sans-serif',
+            },
+        }, h('div', { style: { display: 'flex' } }, `Hey ${p.userName}! Keep going, you're doing great!`), h('div', { style: { display: 'flex', marginLeft: 8 } }, SVGS.sparkle(20, '#7C3AED')))), h('div', {
+            style: {
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginLeft: 20,
+                flexShrink: 0,
+            },
+        }, h('div', { style: { display: 'flex', marginRight: 16 } }, SVGS.sun(56)), h('div', { style: { display: 'flex', marginRight: 16 } }, SVGS.cloud(44)), h('div', { style: { display: 'flex' } }, SVGS.plant(48)))), h('div', {
+            style: {
+                display: 'flex',
+                flexDirection: 'column',
+                width: '100%',
+                boxSizing: 'border-box',
+            },
+        }, ...memberRows), h('div', {
+            style: {
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                width: '100%',
+                height: 170,
+                background: '#FEF9C3',
+                border: '2px solid #FDE047',
+                borderRadius: 24,
+                padding: '22px 30px',
+                marginTop: 4,
+                boxSizing: 'border-box',
+            },
+        }, h('div', {
+            style: {
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
-                background: moodConfig.color, borderRadius: 20,
-                padding: '16px 24px',
+                marginRight: 22,
+                flexShrink: 0,
             },
-        }, h('div', { style: { fontSize: 48, fontWeight: 900, color: C.white, lineHeight: 1 } }, `${overallPercent}%`), h('div', { style: { fontSize: 18, color: 'rgba(255,255,255,0.8)', marginTop: 4 } }, 'overall')))));
+        }, SVGS.trophy(60)), h('div', {
+            style: {
+                display: 'flex',
+                flexDirection: 'column',
+                flex: 1,
+            },
+        }, h('div', {
+            style: {
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+            },
+        }, h('div', {
+            style: {
+                fontSize: 24,
+                fontWeight: 900,
+                color: '#1E293B',
+            },
+        }, 'Group Summary'), h('div', { style: { display: 'flex', marginLeft: 8 } }, SVGS.star(20, '#F59E0B'))), h('div', {
+            style: {
+                fontSize: 18,
+                fontWeight: 700,
+                color: '#475569',
+                marginTop: 4,
+                display: 'flex',
+            },
+        }, `Total: ${totalCompleted}/${totalItems} (${overallPercent}%)`), h('div', {
+            style: {
+                fontSize: 15,
+                fontWeight: 600,
+                color: '#D97706',
+                marginTop: 4,
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+            },
+        }, h('div', { style: { display: 'flex', marginRight: 6 } }, SVGS.sparkle(16, '#D97706')), h('div', { style: { display: 'flex' } }, moodConfig.msg))), h('div', {
+            style: {
+                width: 84,
+                height: 84,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 28,
+                position: 'relative',
+                flexShrink: 0,
+            },
+        }, h('svg', {
+            width: 84,
+            height: 84,
+            viewBox: '0 0 84 84',
+            style: {
+                position: 'absolute',
+                transform: 'rotate(-90deg)',
+            },
+        }, h('circle', {
+            cx: 42,
+            cy: 42,
+            r: 34,
+            stroke: '#E2E8F0',
+            strokeWidth: 9,
+            fill: 'none',
+        }), h('circle', {
+            cx: 42,
+            cy: 42,
+            r: 34,
+            stroke: '#8B5CF6',
+            strokeWidth: 9,
+            strokeDasharray: '213.6',
+            strokeDashoffset: (213.6 * (1 - overallPercent / 100)).toFixed(1),
+            strokeLinecap: 'round',
+            fill: 'none',
+        })), h('div', {
+            style: {
+                fontSize: 20,
+                fontWeight: 900,
+                color: '#1E293B',
+            },
+        }, `${overallPercent}%`)), h('div', {
+            style: {
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 7,
+                marginRight: 24,
+                flexShrink: 0,
+            },
+        }, h('div', {
+            style: {
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                fontSize: 15,
+                fontWeight: 600,
+                color: '#334155',
+            },
+        }, h('div', {
+            style: {
+                width: 20,
+                height: 20,
+                borderRadius: 10,
+                background: '#10B981',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            },
+        }, SVGS.check(12, '#FFFFFF')), h('div', { style: { marginLeft: 8 } }, `Completed ${totalCompleted}`)), h('div', {
+            style: {
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                fontSize: 15,
+                fontWeight: 600,
+                color: '#334155',
+            },
+        }, h('div', {
+            style: {
+                width: 20,
+                height: 20,
+                borderRadius: 10,
+                background: '#EF4444',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            },
+        }, SVGS.cross(11, '#FFFFFF')), h('div', { style: { marginLeft: 8 } }, `Pending ${pendingCount}`)), h('div', {
+            style: {
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                fontSize: 15,
+                fontWeight: 600,
+                color: '#334155',
+            },
+        }, SVGS.users(18, '#64748B'), h('div', { style: { marginLeft: 8 } }, `Participants ${allMembers.length}`))), h('div', {
+            style: {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+            },
+        }, SVGS.rocket(60)))));
     }
 };
 exports.ReportCardService = ReportCardService;

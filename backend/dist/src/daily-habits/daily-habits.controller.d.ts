@@ -16,10 +16,10 @@ export declare class DailyHabitsController {
         subtaskCompletions: {
             id: string;
             userId: string;
+            subtaskId: string;
             date: Date;
             completed: boolean;
             completedAt: Date | null;
-            subtaskId: string;
         }[];
     }>;
     setHabit(user: AuthenticatedUser, habitId: string, dto: SetCompletionDto): Promise<{
@@ -33,9 +33,9 @@ export declare class DailyHabitsController {
     setSubtask(user: AuthenticatedUser, subtaskId: string, dto: SetCompletionDto): Promise<{
         id: string;
         userId: string;
+        subtaskId: string;
         date: Date;
         completed: boolean;
         completedAt: Date | null;
-        subtaskId: string;
     }>;
 }

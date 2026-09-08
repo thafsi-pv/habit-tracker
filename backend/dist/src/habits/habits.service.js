@@ -13,14 +13,16 @@ exports.HabitsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const authorization_service_1 = require("../common/authorization.service");
+const redis_service_1 = require("../redis/redis.service");
 let HabitsService = class HabitsService {
-    constructor(prisma, authz) {
+    constructor(prisma, authz, redis) {
         this.prisma = prisma;
         this.authz = authz;
+        this.redis = redis;
     }
     async create(userId, dto) {
         await this.authz.requireMaster(userId, dto.trackerId);
-        return this.prisma.habit.create({
+        const habit = await this.prisma.habit.create({
             data: {
                 trackerId: dto.trackerId,
                 name: dto.name,
@@ -28,14 +30,22 @@ let HabitsService = class HabitsService {
                 sortOrder: dto.sortOrder ?? 0,
             },
         });
+        this.redis.del(`tracker:details:${dto.trackerId}`).catch(() => { });
+        this.redis.delByPattern('dashboard:*').catch(() => { });
+        return habit;
     }
     async update(userId, habitId, dto) {
         await this.authz.requireHabitMasterAccess(userId, habitId);
-        return this.prisma.habit.update({ where: { id: habitId }, data: dto });
+        const habit = await this.prisma.habit.update({ where: { id: habitId }, data: dto });
+        this.redis.del(`tracker:details:${habit.trackerId}`).catch(() => { });
+        this.redis.delByPattern('dashboard:*').catch(() => { });
+        return habit;
     }
     async remove(userId, habitId) {
         await this.authz.requireHabitMasterAccess(userId, habitId);
-        await this.prisma.habit.update({ where: { id: habitId }, data: { isActive: false } });
+        const habit = await this.prisma.habit.update({ where: { id: habitId }, data: { isActive: false } });
+        this.redis.del(`tracker:details:${habit.trackerId}`).catch(() => { });
+        this.redis.delByPattern('dashboard:*').catch(() => { });
         return { success: true };
     }
 };
@@ -43,6 +53,7 @@ exports.HabitsService = HabitsService;
 exports.HabitsService = HabitsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        authorization_service_1.AuthorizationService])
+        authorization_service_1.AuthorizationService,
+        redis_service_1.RedisService])
 ], HabitsService);
 //# sourceMappingURL=habits.service.js.map

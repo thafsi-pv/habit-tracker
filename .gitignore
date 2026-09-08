@@ -15,3 +15,7 @@ pnpm-debug.log*
 .vite
 .temp
 .cache
+dev-dist
+frontend/dev-dist
+frontend/backend
+frontend/frontend

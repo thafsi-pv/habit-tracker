@@ -13,24 +13,34 @@ exports.HabitSubtasksService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const authorization_service_1 = require("../common/authorization.service");
+const redis_service_1 = require("../redis/redis.service");
 let HabitSubtasksService = class HabitSubtasksService {
-    constructor(prisma, authz) {
+    constructor(prisma, authz, redis) {
         this.prisma = prisma;
         this.authz = authz;
+        this.redis = redis;
     }
     async create(userId, dto) {
         await this.authz.requireHabitMasterAccess(userId, dto.habitId);
-        return this.prisma.habitSubtask.create({
+        const subtask = await this.prisma.habitSubtask.create({
             data: { habitId: dto.habitId, name: dto.name, sortOrder: dto.sortOrder ?? 0 },
         });
+        this.redis.delByPattern('tracker:details:*').catch(() => { });
+        this.redis.delByPattern('dashboard:*').catch(() => { });
+        return subtask;
     }
     async update(userId, subtaskId, dto) {
         await this.authz.requireSubtaskMasterAccess(userId, subtaskId);
-        return this.prisma.habitSubtask.update({ where: { id: subtaskId }, data: dto });
+        const subtask = await this.prisma.habitSubtask.update({ where: { id: subtaskId }, data: dto });
+        this.redis.delByPattern('tracker:details:*').catch(() => { });
+        this.redis.delByPattern('dashboard:*').catch(() => { });
+        return subtask;
     }
     async remove(userId, subtaskId) {
         await this.authz.requireSubtaskMasterAccess(userId, subtaskId);
-        await this.prisma.habitSubtask.update({ where: { id: subtaskId }, data: { isActive: false } });
+        const subtask = await this.prisma.habitSubtask.update({ where: { id: subtaskId }, data: { isActive: false } });
+        this.redis.delByPattern('tracker:details:*').catch(() => { });
+        this.redis.delByPattern('dashboard:*').catch(() => { });
         return { success: true };
     }
 };
@@ -38,6 +48,7 @@ exports.HabitSubtasksService = HabitSubtasksService;
 exports.HabitSubtasksService = HabitSubtasksService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        authorization_service_1.AuthorizationService])
+        authorization_service_1.AuthorizationService,
+        redis_service_1.RedisService])
 ], HabitSubtasksService);
 //# sourceMappingURL=habit-subtasks.service.js.map

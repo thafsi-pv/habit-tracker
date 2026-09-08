@@ -1,11 +1,13 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthorizationService } from '../common/authorization.service';
 import { ProgressService } from '../progress/progress.service';
+import { RedisService } from '../redis/redis.service';
 export declare class DashboardService {
     private prisma;
     private authz;
     private progressService;
-    constructor(prisma: PrismaService, authz: AuthorizationService, progressService: ProgressService);
+    private redis;
+    constructor(prisma: PrismaService, authz: AuthorizationService, progressService: ProgressService, redis: RedisService);
     getToday(userId: string, trackerId: string, dateStr?: string): Promise<{
         date: string;
         userName: string;
@@ -32,6 +34,17 @@ export declare class DashboardService {
             completed: number;
             total: number;
             percent: number;
+            habits: {
+                id: string;
+                name: string;
+                icon: string | null;
+                completed: boolean;
+                subtasks: {
+                    id: string;
+                    name: string;
+                    completed: boolean;
+                }[];
+            }[];
         }[];
     }>;
 }

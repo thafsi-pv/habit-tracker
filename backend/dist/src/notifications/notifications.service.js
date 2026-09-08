@@ -23,7 +23,13 @@ function formatHabitLine(h) {
     const icon = h.icon ?? '•';
     const status = h.completed ? '✅' : '❌';
     const streak = h.streak > 0 ? ` 🔥 ${h.streak} day streak` : '';
-    return `  ${icon} ${h.name}  ${status}${streak}`;
+    const lines = [`  ${icon} ${h.name}  ${status}${streak}`];
+    if (h.subtasks && h.subtasks.length > 0) {
+        for (const sub of h.subtasks) {
+            lines.push(`     └─ ${sub.completed ? '✅' : '❌'} ${sub.name}`);
+        }
+    }
+    return lines;
 }
 function formatMemberSection(member, isCurrentUser) {
     const label = isCurrentUser ? '📋 *Your Activity*' : `👤 *${member.name}*${member.isMaster ? ' 👑' : ''}`;
@@ -32,7 +38,7 @@ function formatMemberSection(member, isCurrentUser) {
         '─'.repeat(20),
     ];
     for (const h of member.habits) {
-        lines.push(formatHabitLine(h));
+        lines.push(...formatHabitLine(h));
         lines.push('');
     }
     const bar = buildProgressBar(member.percent);
@@ -138,6 +144,10 @@ let NotificationsService = NotificationsService_1 = class NotificationsService {
                             icon: h.icon,
                             completed: h.subtasks.length === 0 ? h.completed : h.subtasks.every((s) => s.completed),
                             streak,
+                            subtasks: (h.subtasks || []).map((s) => ({
+                                name: s.name,
+                                completed: s.completed,
+                            })),
                         };
                     }),
                     completed: dashboard.myProgress.completed,

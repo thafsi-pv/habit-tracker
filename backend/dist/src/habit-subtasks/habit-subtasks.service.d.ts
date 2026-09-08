@@ -1,10 +1,12 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthorizationService } from '../common/authorization.service';
 import { CreateSubtaskDto, UpdateSubtaskDto } from './dto/subtask.dto';
+import { RedisService } from '../redis/redis.service';
 export declare class HabitSubtasksService {
     private prisma;
     private authz;
-    constructor(prisma: PrismaService, authz: AuthorizationService);
+    private redis;
+    constructor(prisma: PrismaService, authz: AuthorizationService, redis: RedisService);
     create(userId: string, dto: CreateSubtaskDto): Promise<{
         id: string;
         name: string;

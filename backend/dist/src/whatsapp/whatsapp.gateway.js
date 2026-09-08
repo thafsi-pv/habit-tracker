@@ -50,7 +50,7 @@ __decorate([
 ], WhatsAppGateway.prototype, "server", void 0);
 exports.WhatsAppGateway = WhatsAppGateway = WhatsAppGateway_1 = __decorate([
     (0, common_1.Injectable)(),
-    (0, websockets_1.WebSocketGateway)({ namespace: '/whatsapp', cors: { origin: process.env.APP_URL, credentials: true } }),
+    (0, websockets_1.WebSocketGateway)({ namespace: '/whatsapp', cors: { origin: true, credentials: true } }),
     __metadata("design:paramtypes", [jwt_1.JwtService])
 ], WhatsAppGateway);
 //# sourceMappingURL=whatsapp.gateway.js.map

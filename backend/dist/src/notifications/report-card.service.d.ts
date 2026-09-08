@@ -1,8 +1,13 @@
+interface SubtaskRow {
+    name: string;
+    completed: boolean;
+}
 interface HabitRow {
     name: string;
     icon: string | null;
     completed: boolean;
     streak: number;
+    subtasks: SubtaskRow[];
 }
 interface MemberCardData {
     name: string;
@@ -28,8 +33,8 @@ export declare class ReportCardService {
     private cachedMalayalamFont;
     private getFont;
     private getMalayalamFont;
+    estimateHeight(p: ReportImageParams): number;
     render(params: ReportImageParams): Promise<Buffer>;
-    private estimateHeight;
     private buildJsx;
 }
 export {};

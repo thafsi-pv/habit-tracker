@@ -1,8 +1,10 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTrackerDto, UpdateTrackerDto } from './dto/tracker.dto';
+import { RedisService } from '../redis/redis.service';
 export declare class TrackersService {
     private prisma;
-    constructor(prisma: PrismaService);
+    private redis;
+    constructor(prisma: PrismaService, redis: RedisService);
     create(userId: string, dto: CreateTrackerDto): Promise<{
         members: ({
             user: {
@@ -20,10 +22,10 @@ export declare class TrackersService {
     } & {
         id: string;
         name: string;
-        notifyOnActivityUpdate: boolean;
         createdAt: Date;
         updatedAt: Date;
         ownerId: string;
+        notifyOnActivityUpdate: boolean;
     }>;
     findAllForUser(userId: string): Promise<{
         myRole: import(".prisma/client").$Enums.TrackerRole;
@@ -33,17 +35,17 @@ export declare class TrackersService {
         };
         id: string;
         name: string;
-        notifyOnActivityUpdate: boolean;
         createdAt: Date;
         updatedAt: Date;
         ownerId: string;
+        notifyOnActivityUpdate: boolean;
     }[]>;
     findOne(trackerId: string): Promise<{
         members: ({
             user: {
                 id: string;
-                name: string;
                 email: string;
+                name: string;
                 avatarUrl: string | null;
             };
         } & {
@@ -59,8 +61,8 @@ export declare class TrackersService {
                 name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                isActive: boolean;
                 sortOrder: number;
+                isActive: boolean;
                 habitId: string;
             }[];
         } & {
@@ -68,26 +70,26 @@ export declare class TrackersService {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            trackerId: string;
-            isActive: boolean;
-            sortOrder: number;
             icon: string | null;
+            sortOrder: number;
+            isActive: boolean;
+            trackerId: string;
         })[];
     } & {
         id: string;
         name: string;
-        notifyOnActivityUpdate: boolean;
         createdAt: Date;
         updatedAt: Date;
         ownerId: string;
+        notifyOnActivityUpdate: boolean;
     }>;
     update(trackerId: string, dto: UpdateTrackerDto): Promise<{
         id: string;
         name: string;
-        notifyOnActivityUpdate: boolean;
         createdAt: Date;
         updatedAt: Date;
         ownerId: string;
+        notifyOnActivityUpdate: boolean;
     }>;
     remove(trackerId: string): Promise<{
         success: boolean;

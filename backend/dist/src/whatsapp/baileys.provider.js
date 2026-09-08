@@ -115,6 +115,9 @@ let BaileysWhatsAppProvider = BaileysWhatsAppProvider_1 = class BaileysWhatsAppP
         const record = await this.prisma.whatsAppSession.findUnique({ where: { userId } });
         if (!record)
             return { status: 'DISCONNECTED' };
+        if (record.status === 'CONNECTING') {
+            return { status: 'DISCONNECTED' };
+        }
         return {
             status: record.status,
             phoneNumber: record.phoneNumber,

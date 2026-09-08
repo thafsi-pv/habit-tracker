@@ -15,6 +15,17 @@ export declare class ProgressService {
             completed: number;
             total: number;
             percent: number;
+            habits: {
+                id: string;
+                name: string;
+                icon: string | null;
+                completed: boolean;
+                subtasks: {
+                    id: string;
+                    name: string;
+                    completed: boolean;
+                }[];
+            }[];
         }[];
     }>;
     getWeeklyProgress(userId: string, trackerId: string): Promise<{

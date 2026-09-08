@@ -24,7 +24,7 @@ let ProgressService = class ProgressService {
         return this.prisma.habit.findMany({
             where: { trackerId, isActive: true },
             orderBy: { sortOrder: 'asc' },
-            include: { subtasks: { where: { isActive: true } } },
+            include: { subtasks: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } } },
         });
     }
     async getMembers(trackerId) {
@@ -53,6 +53,17 @@ let ProgressService = class ProgressService {
                     return acc + h.subtasks.filter(s => subtaskCompletedSet.has(s.id)).length;
                 }
             }, 0);
+            const memberHabits = habits.map((h) => ({
+                id: h.id,
+                name: h.name,
+                icon: h.icon,
+                completed: (0, habit_completion_util_1.isHabitCompleteForUser)(h, habitCompletedSet, subtaskCompletedSet),
+                subtasks: h.subtasks.map((s) => ({
+                    id: s.id,
+                    name: s.name,
+                    completed: subtaskCompletedSet.has(s.id),
+                })),
+            }));
             return {
                 userId: m.userId,
                 name: m.user.name,
@@ -60,6 +71,7 @@ let ProgressService = class ProgressService {
                 completed,
                 total,
                 percent: total === 0 ? 0 : Math.round((completed / total) * 100),
+                habits: memberHabits,
             };
         });
         return { date: dateStr, members: results };

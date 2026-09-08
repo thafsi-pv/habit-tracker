@@ -21,10 +21,10 @@ export declare class TrackersController {
     } & {
         id: string;
         name: string;
-        notifyOnActivityUpdate: boolean;
         createdAt: Date;
         updatedAt: Date;
         ownerId: string;
+        notifyOnActivityUpdate: boolean;
     }>;
     findAll(user: AuthenticatedUser): Promise<{
         myRole: import(".prisma/client").$Enums.TrackerRole;
@@ -34,17 +34,17 @@ export declare class TrackersController {
         };
         id: string;
         name: string;
-        notifyOnActivityUpdate: boolean;
         createdAt: Date;
         updatedAt: Date;
         ownerId: string;
+        notifyOnActivityUpdate: boolean;
     }[]>;
     findOne(trackerId: string): Promise<{
         members: ({
             user: {
                 id: string;
-                name: string;
                 email: string;
+                name: string;
                 avatarUrl: string | null;
             };
         } & {
@@ -60,8 +60,8 @@ export declare class TrackersController {
                 name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                isActive: boolean;
                 sortOrder: number;
+                isActive: boolean;
                 habitId: string;
             }[];
         } & {
@@ -69,26 +69,26 @@ export declare class TrackersController {
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            trackerId: string;
-            isActive: boolean;
-            sortOrder: number;
             icon: string | null;
+            sortOrder: number;
+            isActive: boolean;
+            trackerId: string;
         })[];
     } & {
         id: string;
         name: string;
-        notifyOnActivityUpdate: boolean;
         createdAt: Date;
         updatedAt: Date;
         ownerId: string;
+        notifyOnActivityUpdate: boolean;
     }>;
     update(trackerId: string, dto: UpdateTrackerDto): Promise<{
         id: string;
         name: string;
-        notifyOnActivityUpdate: boolean;
         createdAt: Date;
         updatedAt: Date;
         ownerId: string;
+        notifyOnActivityUpdate: boolean;
     }>;
     remove(trackerId: string): Promise<{
         success: boolean;
