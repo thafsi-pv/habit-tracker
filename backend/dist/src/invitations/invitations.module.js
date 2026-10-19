@@ -11,11 +11,13 @@ const common_1 = require("@nestjs/common");
 const invitations_controller_1 = require("./invitations.controller");
 const invitations_service_1 = require("./invitations.service");
 const email_service_1 = require("./email.service");
+const notifications_module_1 = require("../notifications/notifications.module");
 let InvitationsModule = class InvitationsModule {
 };
 exports.InvitationsModule = InvitationsModule;
 exports.InvitationsModule = InvitationsModule = __decorate([
     (0, common_1.Module)({
+        imports: [notifications_module_1.NotificationsModule],
         controllers: [invitations_controller_1.InvitationsController],
         providers: [invitations_service_1.InvitationsService, email_service_1.EmailService],
     })

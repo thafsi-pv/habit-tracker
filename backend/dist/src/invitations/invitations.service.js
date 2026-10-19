@@ -48,6 +48,7 @@ const client_1 = require("@prisma/client");
 const crypto = __importStar(require("crypto"));
 const prisma_service_1 = require("../prisma/prisma.service");
 const email_service_1 = require("./email.service");
+const notifications_service_1 = require("../notifications/notifications.service");
 const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 function generateToken() {
     return crypto.randomBytes(32).toString('hex');
@@ -56,9 +57,10 @@ function hashToken(token) {
     return crypto.createHash('sha256').update(token).digest('hex');
 }
 let InvitationsService = class InvitationsService {
-    constructor(prisma, emailService) {
+    constructor(prisma, emailService, notificationsService) {
         this.prisma = prisma;
         this.emailService = emailService;
+        this.notificationsService = notificationsService;
     }
     async create(trackerId, invitedById, dto) {
         const email = dto.email.toLowerCase().trim();
@@ -134,7 +136,7 @@ let InvitationsService = class InvitationsService {
     }
     async accept(userId, invitationId) {
         const invitation = await this.assertAcceptable(invitationId, userId);
-        return this.prisma.$transaction(async (tx) => {
+        const result = await this.prisma.$transaction(async (tx) => {
             const existingMember = await tx.trackerMember.findUnique({
                 where: { trackerId_userId: { trackerId: invitation.trackerId, userId } },
             });
@@ -147,6 +149,14 @@ let InvitationsService = class InvitationsService {
             await tx.invitation.update({ where: { id: invitation.id }, data: { acceptedAt: new Date() } });
             return member;
         });
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { whatsappNumber: true },
+        });
+        if (user?.whatsappNumber) {
+            this.notificationsService.syncMemberToTrackerGroup(invitation.trackerId, user.whatsappNumber).catch(() => { });
+        }
+        return result;
     }
     async acceptByToken(userId, token) {
         const invitation = await this.prisma.invitation.findUnique({
@@ -161,6 +171,7 @@ exports.InvitationsService = InvitationsService;
 exports.InvitationsService = InvitationsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        email_service_1.EmailService])
+        email_service_1.EmailService,
+        notifications_service_1.NotificationsService])
 ], InvitationsService);
 //# sourceMappingURL=invitations.service.js.map

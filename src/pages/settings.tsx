@@ -5,7 +5,7 @@ import { ChevronRight, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useActiveTracker } from '@/hooks/use-active-tracker';
 import { useUpdateSettings } from '@/hooks/use-settings';
-import { useUpdateTracker } from '@/hooks/use-trackers';
+import { useUpdateTracker, useSyncWhatsAppGroup } from '@/hooks/use-trackers';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,8 @@ export default function Settings() {
   const [notificationTime, setNotificationTime] = React.useState(user?.notificationTime ?? '20:00');
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(user?.notificationsEnabled ?? false);
   const [whatsappNumber, setWhatsappNumber] = React.useState(user?.whatsappNumber ?? '');
+
+  const syncGroup = useSyncWhatsAppGroup(activeTracker?.id ?? '');
 
   const isMaster = activeTracker?.myRole === 'MASTER';
 
@@ -163,8 +165,81 @@ export default function Settings() {
               />
             </label>
             <p className="text-xs text-muted-foreground mt-0">
-              When someone marks an activity as done, a quick WhatsApp notification will be sent to the group.
+              When someone marks an activity as done, a notification is sent exclusively to the tracker's WhatsApp group.
             </p>
+
+            {/* WhatsApp Group Management */}
+            <div className="rounded-lg border bg-muted/40 p-3 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-semibold flex items-center gap-1.5">
+                    <span>WhatsApp Group</span>
+                    {activeTracker.whatsappGroupId ? (
+                      <span className="text-[11px] bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded-full font-medium">
+                        Linked
+                      </span>
+                    ) : (
+                      <span className="text-[11px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 px-2 py-0.5 rounded-full font-medium">
+                        Not Created Yet
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Activity updates and daily summaries are sent here (no individual messages).
+                  </p>
+                </div>
+              </div>
+
+              {activeTracker.whatsappGroupInviteLink && (
+                <div className="flex items-center gap-2 pt-1">
+                  <a
+                    href={activeTracker.whatsappGroupInviteLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-primary underline truncate flex-1"
+                  >
+                    {activeTracker.whatsappGroupInviteLink}
+                  </a>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={() => {
+                      navigator.clipboard.writeText(activeTracker.whatsappGroupInviteLink!);
+                      toast.success('Group invite link copied!');
+                    }}
+                  >
+                    Copy Link
+                  </Button>
+                </div>
+              )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs"
+                disabled={syncGroup.isPending}
+                onClick={async () => {
+                  try {
+                    const res = await syncGroup.mutateAsync();
+                    if (res.success) {
+                      toast.success('WhatsApp group synchronized with aligned members!');
+                    } else {
+                      toast.error('Could not sync WhatsApp group. Ensure WhatsApp is connected and members have numbers.');
+                    }
+                  } catch (err: any) {
+                    toast.error(err?.response?.data?.message || 'Failed to sync WhatsApp group');
+                  }
+                }}
+              >
+                {syncGroup.isPending
+                  ? 'Syncing Group...'
+                  : activeTracker.whatsappGroupId
+                  ? 'Sync Group Members'
+                  : 'Create WhatsApp Group'}
+              </Button>
+            </div>
+
             <div className="space-y-2 pt-2">
               <ManageHabitsDialog trackerId={activeTracker.id} />
               <ManageMembersDialog trackerId={activeTracker.id} />
@@ -175,7 +250,7 @@ export default function Settings() {
                 disabled={triggerReport.isPending}
                 onClick={() => triggerReport.mutate(activeTracker.id)}
               >
-                {triggerReport.isPending ? 'Sending Report...' : 'Trigger Report Now'}
+                {triggerReport.isPending ? 'Sending Report to Group...' : 'Trigger Daily Group Report Now'}
               </Button>
             </div>
           </CardContent>

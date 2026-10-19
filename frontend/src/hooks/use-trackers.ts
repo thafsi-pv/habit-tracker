@@ -106,3 +106,16 @@ export function useDeleteSubtask(trackerId: string) {
     },
   });
 }
+
+export function useSyncWhatsAppGroup(trackerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () =>
+      (await api.post<{ success: boolean; groupId?: string }>(`/trackers/${trackerId}/sync-whatsapp-group`)).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trackers'] });
+      queryClient.invalidateQueries({ queryKey: ['tracker', trackerId] });
+    },
+  });
+}
+

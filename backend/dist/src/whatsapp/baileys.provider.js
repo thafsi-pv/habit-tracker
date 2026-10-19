@@ -155,6 +155,87 @@ let BaileysWhatsAppProvider = BaileysWhatsAppProvider_1 = class BaileysWhatsAppP
             return { success: false, error: err.message };
         }
     }
+    async createGroup(senderUserId, groupName, participantNumbers) {
+        const session = await this.ensureConnected(senderUserId);
+        if (!session)
+            return { success: false, error: 'WhatsApp is not connected' };
+        try {
+            const myNumber = session.user?.id?.split(':')[0]?.replace(/\D/g, '') ?? '';
+            const participantJids = participantNumbers
+                .map((num) => num.replace(/\D/g, ''))
+                .filter((clean) => clean && clean !== myNumber)
+                .map((clean) => `${clean}@s.whatsapp.net`);
+            const uniqueJids = Array.from(new Set(participantJids));
+            if (uniqueJids.length === 0) {
+                return {
+                    success: false,
+                    error: 'At least one participant with a WhatsApp number is required to create a group',
+                };
+            }
+            const trimmedTitle = groupName.slice(0, 100);
+            const group = await session.groupCreate(trimmedTitle, uniqueJids);
+            let inviteLink;
+            try {
+                const code = await session.groupInviteCode(group.id);
+                if (code) {
+                    inviteLink = `https://chat.whatsapp.com/${code}`;
+                }
+            }
+            catch (e) {
+                this.logger.warn(`Could not get invite code for group ${group.id}: ${e.message}`);
+            }
+            return {
+                success: true,
+                groupId: group.id,
+                inviteLink,
+            };
+        }
+        catch (err) {
+            this.logger.error(`Failed to create WhatsApp group "${groupName}"`, err);
+            return { success: false, error: err.message };
+        }
+    }
+    async addParticipants(senderUserId, groupJid, participantNumbers) {
+        const session = await this.ensureConnected(senderUserId);
+        if (!session)
+            return { success: false, error: 'WhatsApp is not connected' };
+        try {
+            const myNumber = session.user?.id?.split(':')[0]?.replace(/\D/g, '') ?? '';
+            const participantJids = participantNumbers
+                .map((num) => num.replace(/\D/g, ''))
+                .filter((clean) => clean && clean !== myNumber)
+                .map((clean) => `${clean}@s.whatsapp.net`);
+            const uniqueJids = Array.from(new Set(participantJids));
+            if (uniqueJids.length === 0)
+                return { success: true };
+            await session.groupParticipantsUpdate(groupJid, uniqueJids, 'add');
+            return { success: true };
+        }
+        catch (err) {
+            this.logger.error(`Failed to add participants to WhatsApp group ${groupJid}`, err);
+            return { success: false, error: err.message };
+        }
+    }
+    async removeParticipants(senderUserId, groupJid, participantNumbers) {
+        const session = await this.ensureConnected(senderUserId);
+        if (!session)
+            return { success: false, error: 'WhatsApp is not connected' };
+        try {
+            const participantJids = participantNumbers
+                .map((num) => num.replace(/\D/g, ''))
+                .filter(Boolean)
+                .map((clean) => `${clean}@s.whatsapp.net`);
+            const uniqueJids = Array.from(new Set(participantJids));
+            if (uniqueJids.length === 0)
+                return { success: true };
+            await session.groupParticipantsUpdate(groupJid, uniqueJids, 'remove');
+            return { success: true };
+        }
+        catch (err) {
+            this.logger.error(`Failed to remove participants from WhatsApp group ${groupJid}`, err);
+            return { success: false, error: err.message };
+        }
+    }
     toJid(recipient) {
         return recipient.includes('@') ? recipient : `${recipient.replace(/\D/g, '')}@s.whatsapp.net`;
     }

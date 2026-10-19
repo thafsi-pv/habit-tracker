@@ -13,9 +13,11 @@ exports.TrackerMembersService = void 0;
 const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../prisma/prisma.service");
+const notifications_service_1 = require("../notifications/notifications.service");
 let TrackerMembersService = class TrackerMembersService {
-    constructor(prisma) {
+    constructor(prisma, notificationsService) {
         this.prisma = prisma;
+        this.notificationsService = notificationsService;
     }
     async findAll(trackerId) {
         return this.prisma.trackerMember.findMany({
@@ -27,6 +29,7 @@ let TrackerMembersService = class TrackerMembersService {
     async remove(trackerId, targetUserId) {
         const target = await this.prisma.trackerMember.findUnique({
             where: { trackerId_userId: { trackerId, userId: targetUserId } },
+            include: { user: { select: { whatsappNumber: true } } },
         });
         if (!target)
             throw new common_1.NotFoundException('Member not found in this tracker');
@@ -34,12 +37,16 @@ let TrackerMembersService = class TrackerMembersService {
             throw new common_1.BadRequestException('The tracker master cannot be removed');
         }
         await this.prisma.trackerMember.delete({ where: { id: target.id } });
+        if (target.user?.whatsappNumber) {
+            this.notificationsService.removeMemberFromTrackerGroup(trackerId, target.user.whatsappNumber).catch(() => { });
+        }
         return { success: true };
     }
 };
 exports.TrackerMembersService = TrackerMembersService;
 exports.TrackerMembersService = TrackerMembersService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        notifications_service_1.NotificationsService])
 ], TrackerMembersService);
 //# sourceMappingURL=tracker-members.service.js.map

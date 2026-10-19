@@ -11,6 +11,12 @@ export declare class NotificationsService {
     private reportCardService;
     private readonly logger;
     constructor(prisma: PrismaService, whatsappService: WhatsAppService, dashboardService: DashboardService, progressService: ProgressService, reportCardService: ReportCardService);
+    ensureTrackerWhatsAppGroup(trackerId: string): Promise<{
+        groupId: string;
+        senderId: string;
+    } | null>;
     sendTrackerReports(trackerId: string): Promise<void>;
     broadcastActivityCompletion(trackerId: string, activityName: string, completedByUserId: string, completedByUserName: string): Promise<void>;
+    syncMemberToTrackerGroup(trackerId: string, userWhatsappNumber?: string | null): Promise<void>;
+    removeMemberFromTrackerGroup(trackerId: string, userWhatsappNumber?: string | null): Promise<void>;
 }

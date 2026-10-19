@@ -10,11 +10,13 @@ exports.TrackerMembersModule = void 0;
 const common_1 = require("@nestjs/common");
 const tracker_members_controller_1 = require("./tracker-members.controller");
 const tracker_members_service_1 = require("./tracker-members.service");
+const notifications_module_1 = require("../notifications/notifications.module");
 let TrackerMembersModule = class TrackerMembersModule {
 };
 exports.TrackerMembersModule = TrackerMembersModule;
 exports.TrackerMembersModule = TrackerMembersModule = __decorate([
     (0, common_1.Module)({
+        imports: [notifications_module_1.NotificationsModule],
         controllers: [tracker_members_controller_1.TrackerMembersController],
         providers: [tracker_members_service_1.TrackerMembersService],
     })

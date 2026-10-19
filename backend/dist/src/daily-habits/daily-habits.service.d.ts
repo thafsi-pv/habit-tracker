@@ -20,10 +20,10 @@ export declare class DailyHabitsService {
     setSubtaskCompletion(userId: string, subtaskId: string, dto: SetCompletionDto): Promise<{
         id: string;
         userId: string;
-        subtaskId: string;
         date: Date;
         completed: boolean;
         completedAt: Date | null;
+        subtaskId: string;
     }>;
     getForTrackerAndDate(userId: string, trackerId: string, dateStr: string): Promise<{
         habitCompletions: {
@@ -37,10 +37,10 @@ export declare class DailyHabitsService {
         subtaskCompletions: {
             id: string;
             userId: string;
-            subtaskId: string;
             date: Date;
             completed: boolean;
             completedAt: Date | null;
+            subtaskId: string;
         }[];
     }>;
 }

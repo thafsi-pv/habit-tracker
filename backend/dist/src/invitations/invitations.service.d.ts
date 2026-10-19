@@ -1,10 +1,12 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from './email.service';
 import { CreateInvitationDto } from './dto/invitation.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 export declare class InvitationsService {
     private prisma;
     private emailService;
-    constructor(prisma: PrismaService, emailService: EmailService);
+    private notificationsService;
+    constructor(prisma: PrismaService, emailService: EmailService, notificationsService: NotificationsService);
     create(trackerId: string, invitedById: string, dto: CreateInvitationDto): Promise<{
         id: string;
         email: string;

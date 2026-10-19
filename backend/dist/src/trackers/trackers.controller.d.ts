@@ -25,6 +25,8 @@ export declare class TrackersController {
         updatedAt: Date;
         ownerId: string;
         notifyOnActivityUpdate: boolean;
+        whatsappGroupId: string | null;
+        whatsappGroupInviteLink: string | null;
     }>;
     findAll(user: AuthenticatedUser): Promise<{
         myRole: import(".prisma/client").$Enums.TrackerRole;
@@ -38,6 +40,8 @@ export declare class TrackersController {
         updatedAt: Date;
         ownerId: string;
         notifyOnActivityUpdate: boolean;
+        whatsappGroupId: string | null;
+        whatsappGroupInviteLink: string | null;
     }[]>;
     findOne(trackerId: string): Promise<{
         members: ({
@@ -81,6 +85,8 @@ export declare class TrackersController {
         updatedAt: Date;
         ownerId: string;
         notifyOnActivityUpdate: boolean;
+        whatsappGroupId: string | null;
+        whatsappGroupInviteLink: string | null;
     }>;
     update(trackerId: string, dto: UpdateTrackerDto): Promise<{
         id: string;
@@ -89,6 +95,8 @@ export declare class TrackersController {
         updatedAt: Date;
         ownerId: string;
         notifyOnActivityUpdate: boolean;
+        whatsappGroupId: string | null;
+        whatsappGroupInviteLink: string | null;
     }>;
     remove(trackerId: string): Promise<{
         success: boolean;

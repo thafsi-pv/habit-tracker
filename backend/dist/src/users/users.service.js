@@ -12,12 +12,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
+const notifications_service_1 = require("../notifications/notifications.service");
 let UsersService = class UsersService {
-    constructor(prisma) {
+    constructor(prisma, notificationsService) {
         this.prisma = prisma;
+        this.notificationsService = notificationsService;
     }
     async updateSettings(userId, dto) {
-        return this.prisma.user.update({
+        const updated = await this.prisma.user.update({
             where: { id: userId },
             data: dto,
             select: {
@@ -28,11 +30,22 @@ let UsersService = class UsersService {
                 whatsappNumber: true,
             },
         });
+        if (dto.whatsappNumber) {
+            const memberships = await this.prisma.trackerMember.findMany({
+                where: { userId },
+                select: { trackerId: true },
+            });
+            for (const m of memberships) {
+                this.notificationsService.syncMemberToTrackerGroup(m.trackerId, dto.whatsappNumber).catch(() => { });
+            }
+        }
+        return updated;
     }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        notifications_service_1.NotificationsService])
 ], UsersService);
 //# sourceMappingURL=users.service.js.map

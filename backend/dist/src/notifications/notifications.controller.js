@@ -27,6 +27,13 @@ let NotificationsController = class NotificationsController {
         await this.notificationsService.sendTrackerReports(trackerId);
         return { success: true };
     }
+    async syncWhatsAppGroup(trackerId) {
+        const result = await this.notificationsService.ensureTrackerWhatsAppGroup(trackerId);
+        return {
+            success: !!result,
+            groupId: result?.groupId,
+        };
+    }
 };
 exports.NotificationsController = NotificationsController;
 __decorate([
@@ -38,6 +45,15 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], NotificationsController.prototype, "triggerReport", null);
+__decorate([
+    (0, roles_decorator_1.Roles)(client_1.TrackerRole.MASTER),
+    (0, common_1.UseGuards)(tracker_member_guard_1.TrackerMemberGuard),
+    (0, common_1.Post)(':trackerId/sync-whatsapp-group'),
+    __param(0, (0, common_1.Param)('trackerId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], NotificationsController.prototype, "syncWhatsAppGroup", null);
 exports.NotificationsController = NotificationsController = __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('trackers'),

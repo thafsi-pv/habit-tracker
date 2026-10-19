@@ -57,6 +57,41 @@ let WhatsAppService = class WhatsAppService {
         }
         return this.provider.sendImage(senderUserId, cleanNumber, image, caption);
     }
+    async sendToGroup(senderUserId, groupJid, message) {
+        const status = await this.getStatus(senderUserId);
+        if (status.status !== 'CONNECTED') {
+            return { success: false, error: 'Sender WhatsApp is not connected' };
+        }
+        return this.provider.sendText(senderUserId, groupJid, message);
+    }
+    async sendImageToGroup(senderUserId, groupJid, image, caption) {
+        const status = await this.getStatus(senderUserId);
+        if (status.status !== 'CONNECTED') {
+            return { success: false, error: 'Sender WhatsApp is not connected' };
+        }
+        return this.provider.sendImage(senderUserId, groupJid, image, caption);
+    }
+    async createGroup(senderUserId, groupName, participantNumbers) {
+        const status = await this.getStatus(senderUserId);
+        if (status.status !== 'CONNECTED') {
+            return { success: false, error: 'Sender WhatsApp is not connected' };
+        }
+        return this.provider.createGroup(senderUserId, groupName, participantNumbers);
+    }
+    async addParticipantsToGroup(senderUserId, groupJid, participantNumbers) {
+        const status = await this.getStatus(senderUserId);
+        if (status.status !== 'CONNECTED') {
+            return { success: false, error: 'Sender WhatsApp is not connected' };
+        }
+        return this.provider.addParticipants(senderUserId, groupJid, participantNumbers);
+    }
+    async removeParticipantsFromGroup(senderUserId, groupJid, participantNumbers) {
+        const status = await this.getStatus(senderUserId);
+        if (status.status !== 'CONNECTED') {
+            return { success: false, error: 'Sender WhatsApp is not connected' };
+        }
+        return this.provider.removeParticipants(senderUserId, groupJid, participantNumbers);
+    }
 };
 exports.WhatsAppService = WhatsAppService;
 exports.WhatsAppService = WhatsAppService = __decorate([

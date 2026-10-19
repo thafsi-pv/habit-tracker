@@ -5,4 +5,8 @@ export declare class NotificationsController {
     triggerReport(trackerId: string): Promise<{
         success: boolean;
     }>;
+    syncWhatsAppGroup(trackerId: string): Promise<{
+        success: boolean;
+        groupId: string | undefined;
+    }>;
 }

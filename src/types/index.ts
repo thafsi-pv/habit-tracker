@@ -17,6 +17,8 @@ export interface Tracker {
   ownerId: string;
   myRole: TrackerRole;
   notifyOnActivityUpdate?: boolean;
+  whatsappGroupId?: string | null;
+  whatsappGroupInviteLink?: string | null;
   _count?: { members: number; habits: number };
 }
 
