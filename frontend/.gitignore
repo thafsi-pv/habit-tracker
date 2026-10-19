@@ -12,6 +12,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+dist
+dev-dist
 .vite
 .temp
 .cache
+dev-dist
+frontend/dev-dist
+frontend/backend
+frontend/frontend
